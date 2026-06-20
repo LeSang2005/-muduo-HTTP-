@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阅读</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #1e1e2f;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+        }
+        .btn {
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .meta { margin-bottom: 15px; color: #ddd; }
+        .content-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            min-height: 300px;
+        }
+        .chapter-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .chapter-nav button {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid aqua;
+            color: aqua;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .chapter-nav button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .upload-section {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <span class="btn" id="backToBookCity">📚 返回书城</span>
+        <span>
+            <span class="btn" id="backToBookHome">📖 本书主页</span>
+            <a href="menu.html" class="btn" style="text-decoration:none;">返回首页</a>
+        </span>
+    </div>
+
+    <div class="container">
+        <h2 id="chapterTitle"></h2>
+        <div class="meta">
+            书籍：<span id="bookName"></span> | 章节：<span id="chapterNum"></span>
+        </div>
+
+        <!-- 顶部翻页 -->
+        <div class="chapter-nav">
+            <button id="prevTop" disabled>← 上一章</button>
+            <span id="indexTop"></span>
+            <button id="nextTop" disabled>下一章 →</button>
+        </div>
+
+        <div class="content-box" id="content">加载中...</div>
+
+        <!-- 底部翻页 -->
+        <div class="chapter-nav">
+            <button id="prevBottom" disabled>← 上一章</button>
+            <span id="indexBottom"></span>
+            <button id="nextBottom" disabled>下一章 →</button>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h3>✏️ 上传新章节</h3>
+            <input type="text" id="newTitle" placeholder="章节标题"><br><br>
+            <textarea id="newContent" rows="8" placeholder="章节内容..."></textarea><br>
+            <button id="uploadBtn" class="btn">提交上传</button>
+            <span id="uploadMsg"></span>
+        </div>
+
+        <button onclick="history.back()" class="btn" style="margin-top:20px;">← 返回上一页</button>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+        function getQueryParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        var chapterId = getQueryParam('chapter_id');
+        var bookId = getQueryParam('book_id');
+        var bookName = getQueryParam('book_name') || '未知';
+        var chapterTitle = getQueryParam('title') || '未知章节';
+
+        if (!chapterId || !bookId) {
+            document.getElementById('content').innerHTML = '<p style="color:red;">参数错误</p>';
+            throw new Error('Missing params');
+        }
+
+        document.getElementById('bookName').textContent = bookName;
+        document.getElementById('chapterTitle').textContent = chapterTitle;
+        document.title = chapterTitle + ' - 阅读';
+
+        document.getElementById('backToBookCity').onclick = () => window.location.href = baseUrl + '/menu.html';
+        document.getElementById('backToBookHome').onclick = () => window.location.href = baseUrl + '/book.html?name=' + encodeURIComponent(bookName) + '&id=' + bookId;
+
+        var chapters = [];
+        var currentIndex = -1;
+
+        // 获取章节列表
+        function fetchChapterList(cb) {
+            fetch(baseUrl + '/chapterlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.chapters) {
+                    chapters = data.chapters;
+                    currentIndex = chapters.findIndex(ch => String(ch.id) === String(chapterId));
+                }
+                cb();
+            })
+            .catch(() => cb());
+        }
+
+        function loadContent() {
+            document.getElementById('content').textContent = '加载中...';
+            fetch(baseUrl + '/readchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, chapter_id: chapterId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('content').textContent = data.success ? data.content : '加载失败';
+            })
+            .catch(() => document.getElementById('content').textContent = '网络错误');
+        }
+
+        function updateNav() {
+            var hasPrev = currentIndex > 0;
+            var hasNext = currentIndex < chapters.length - 1;
+            var indexText = (currentIndex >= 0) ? (currentIndex + 1) + ' / ' + chapters.length : '';
+
+            ['Top', 'Bottom'].forEach(suffix => {
+                document.getElementById('prev' + suffix).disabled = !hasPrev;
+                document.getElementById('next' + suffix).disabled = !hasNext;
+                document.getElementById('index' + suffix).textContent = indexText;
+            });
+
+            document.getElementById('prevTop').onclick = hasPrev ? goPrev : null;
+            document.getElementById('prevBottom').onclick = hasPrev ? goPrev : null;
+            document.getElementById('nextTop').onclick = hasNext ? goNext : null;
+            document.getElementById('nextBottom').onclick = hasNext ? goNext : null;
+        }
+
+        function goPrev() {
+            if (currentIndex > 0) switchChapter(chapters[currentIndex - 1]);
+        }
+        function goNext() {
+            if (currentIndex < chapters.length - 1) switchChapter(chapters[currentIndex + 1]);
+        }
+
+        function switchChapter(ch) {
+            chapterId = String(ch.id);
+            chapterTitle = '第' + ch.chapter_num + '章 ' + ch.title;
+            history.replaceState(null, '', '?chapter_id=' + chapterId + '&book_id=' + bookId + '&book_name=' + encodeURIComponent(bookName) + '&title=' + encodeURIComponent(chapterTitle));
+            document.getElementById('chapterTitle').textContent = chapterTitle;
+            document.title = chapterTitle + ' - 阅读';
+            currentIndex = chapters.findIndex(c => String(c.id) === chapterId);
+            loadContent();
+            updateNav();
+            window.scrollTo(0, 0);
+        }
+
+        // 初始化
+        fetchChapterList(() => {
+            loadContent();
+            updateNav();
+        });
+    </script>
+</body>
+</html>

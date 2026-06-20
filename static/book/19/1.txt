@@ -1,0 +1,3904 @@
+#pragma once
+#include <openssl/evp.h>
+#include <sstream>
+#include <iomanip>
+#include <string>
+
+inline std::string sha256(const std::string& str) {
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if (!ctx) return "";
+
+    const EVP_MD* md = EVP_sha256();
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hashLen = 0;
+
+    EVP_DigestInit_ex(ctx, md, nullptr);
+    EVP_DigestUpdate(ctx, str.c_str(), str.size());
+    EVP_DigestFinal_ex(ctx, hash, &hashLen);
+    EVP_MD_CTX_free(ctx);
+
+    std::stringstream ss;
+    for (unsigned int i = 0; i < hashLen; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
+    return ss.str();
+}
+#pragma once
+#include"bridge.h"
+class bookinfo: public bridge{
+public:
+bookinfo();
+std::string send()override;
+private:
+};
+#pragma once
+#include"bridge.h"
+class booklist: public bridge{
+    public:
+    booklist();
+    std::string send()override;
+};
+#pragma once
+#include <string>
+#include <json.hpp>
+#include <memory>
+#include <muduo/net/TcpConnection.h>
+#include <muduo/net/InetAddress.h>
+#include "mysqlpool.h"
+
+class bridge {
+public:
+    using json = nlohmann::json;
+    void setmessage(std::string message) { message_ = message; }
+    void setmethodname(std::string name) { methodName = name; }
+    bool ismethod(std::string name) { return name == methodName; }
+    bool isMethodEmpty() { return methodName.empty(); }
+    std::string outMethName() { return methodName; }
+    virtual std::string send() { return ""; }
+
+    // 设置连接指针（在 handlequeue 中调用）
+    void setConnection(const muduo::net::TcpConnectionPtr& conn) {
+        ptr_ = conn;
+    }
+
+    // 获取客户端 IP:Port 字符串（例如 "192.168.1.100:54321"）
+    std::string getClientIP() {
+        if (ptr_) {
+            auto addr = ptr_->peerAddress();
+            return addr.toIpPort();
+        }
+        return "unknown";
+    }
+
+protected:
+    std::string message_;
+    std::string methodName;
+    muduo::net::TcpConnectionPtr ptr_;
+};
+#pragma once
+#include"bridge.h"
+class chapterlist:public bridge{
+public:
+chapterlist();
+std::string send()override;
+};
+#pragma once
+#include"bridge.h"
+class createbook:public bridge{
+public:
+createbook();
+std::string send();
+};
+#pragma once
+#include"bridge.h"
+#include <fstream>
+#include <iterator>
+#include <filesystem>
+class createchapter :public bridge{
+public:
+createchapter();
+std::string send();
+};
+#pragma once
+#include"mysql/mysql.h"
+#include<string>
+#include<iostream>
+#include<memory>
+#include"Timestamp.h"
+class MySql{
+public:
+MySql();
+~MySql();
+bool insert(std::string word);
+std::shared_ptr<MYSQL_RES> find(std::string word);
+bool update(std::string word);
+void settime(){time.setnow();}
+long long gettime(){return time.alive();}
+MYSQL* outinit(){return mysql;}
+std::string escape(const std::string& input);
+private:
+MySql(const MySql&) = delete;
+MySql& operator=(const MySql&) = delete;
+MYSQL* mysql;
+Timestamp time;
+};
+#pragma once
+#include "bridge.h"
+#include <fstream>
+#include <filesystem>
+
+class editchapter : public bridge {
+public:
+    editchapter();
+    std::string send() override;
+};
+#pragma once
+#include"bridge.h"
+class find: public bridge{
+public:
+find();
+std::string send()override;
+};
+#pragma once
+#include<muduo/net/TcpServer.h>
+#include<muduo/net/TcpConnection.h>
+#include<muduo/net/Callbacks.h>
+#include<functional>
+#include<muduo/net/Buffer.h>
+#include<muduo/net/EventLoop.h>
+#include<string>
+#include <cerrno>
+#include"postqueue.h"
+#include"bridge.h"
+#include<memory>
+#include<iostream>
+#include"unordered_map"
+class HttpServer{
+public:
+HttpServer();
+~HttpServer()=default;
+void run();
+void setbridge(std::shared_ptr<bridge>b){
+    if(b->isMethodEmpty()){
+        std::cout<<"你有方法没有设置名字"<<std::endl;
+        exit(1);
+    }
+    b_.insert({b->outMethName(),b});
+}
+static std::unordered_map<std::string,muduo::net::TcpConnectionPtr>IdOfConn;
+private:
+std::string error(){
+std::string response="HTTP/1.1 404 Not Found\r\n";
+                                response+="Content-Type:text/html; charset=utf-8\r\n";
+                                response+="Content-Length:13\r\n";
+                                response+="\r\n";
+                                response+="404 Not Found";
+                                return response;
+}
+void onMessage(const muduo::net::TcpConnectionPtr&,
+                            muduo::net::Buffer*,
+                            muduo::Timestamp);
+void onConnection(const muduo::net::TcpConnectionPtr&);
+
+muduo::net::InetAddress readfile();
+std::string ip;
+int port;
+muduo::net::InetAddress addr_;
+muduo::net::EventLoop loop_;
+muduo::net::TcpServer tcpserver_;
+//web_queue shareWithHttpServer_q;
+std::unordered_map<std::string,std::shared_ptr<bridge>>b_;
+std::unordered_map<void*, std::string> connBuf_;  // 用裸指针作为key，存储每个连接的累积数据
+void handlequeue();
+};
+#pragma once
+#include"bridge.h"
+#include<iostream>
+#include"HttpServer.h"
+#include<functional>
+#include<mutex>
+#include"addSave.h"
+#include <muduo/net/TcpConnection.h>   
+#include <muduo/net/InetAddress.h>  
+#include"RateLimiter.h"
+class login: public bridge{
+public:
+login(){
+    setmethodname("login");
+}
+std::string send(){
+json js=json::parse(message_);
+std::cout<<js<<std::endl;
+std::string user=js["username"];
+std::string password=js["password"];
+std::shared_ptr<MySql>login_find=mysqlPool::instance().pop();
+
+if (!RateLimiter::instance().allow(user, 5, 60)) {
+    return R"({"success":0,"message":"请求太频繁"})";
+}
+std::string word="select password from users where id=";
+word=word+login_find->escape(user)+";";
+
+
+std::shared_ptr<MYSQL_RES>res=login_find->find(word);
+MYSQL_ROW row;
+std::string res_password="";
+while((row=mysql_fetch_row(res.get()))){
+res_password=row[0];
+}
+json response;
+
+std::string salt = "readbook_2026.6.18";   
+std::string hashed = sha256(salt + password); // 同样方式算出“苹果泥”
+if(res_password==hashed){
+    response["success"]=1;
+    users.insert({user,1});
+    std::string mess=message_;
+    auto ptr=HttpServer::IdOfConn[message_];
+    ptr->getLoop()->runInLoop([mess,ptr](){
+        ptr->setCloseCallback([mess](const muduo::net::TcpConnectionPtr& conn){
+            std::cout<<"回收"<<std::endl;
+            std::unique_lock<std::mutex>lock(login::login_mutex);
+            json js_=json::parse(mess);
+            login::users.erase(js_["username"]);
+            HttpServer::IdOfConn.erase(mess);
+            conn->shutdown();
+        });
+    });
+}
+else{
+    response["success"]=0;
+}
+std::string target=response.dump();
+return target;
+}
+static std::unordered_map<std::string,int>users;
+static std::mutex login_mutex;
+};
+#pragma once
+#include"db.h"
+#include<queue>
+#include"condition_variable"
+#include"mutex"
+#include"memory"
+#include<thread>
+#include<atomic>
+class mysqlPool{
+public:
+static mysqlPool& instance();
+std::shared_ptr<MySql> pop();
+~mysqlPool();
+private:
+
+mysqlPool();
+mysqlPool(mysqlPool &p)=delete;
+mysqlPool(mysqlPool &&p)=delete;
+mysqlPool& operator=(mysqlPool& p)=delete;
+int num_;
+int maxnum_;
+int minnum_;
+std::queue<MySql*>q;
+std::mutex mtx_;
+std::condition_variable cond_;
+void destory();
+};
+#pragma once
+#include<queue>
+#include<mutex>
+#include<string>
+#include<memory>
+#include<iostream>
+#include<condition_variable>
+#include<muduo/net/TcpConnection.h>
+struct post_struct{
+    std::string method;
+    std::string data;
+    muduo::net::TcpConnectionPtr ptr_;
+}; 
+class web_queue{
+public:
+post_struct pop(){
+    std::unique_lock<std::mutex>lock(q_m);
+    while(web_q.empty()){
+        std::cout<<"等待"<<std::endl;
+        cond_.wait(lock);
+    }
+    std::cout<<"成功取出"<<std::endl;
+    auto message=web_q.front();
+    web_q.pop();
+
+    return message;
+}
+void push(post_struct message){
+ std::unique_lock<std::mutex>lock(q_m);
+ web_q.push(message);
+ std::cout<<"成功放入"<<std::endl;
+ cond_.notify_all();
+}
+bool empty(){
+    std::lock_guard<std::mutex>lock(q_m);
+    return web_q.empty();
+}
+static web_queue& instance();
+std::condition_variable& outCondition(){
+    return cond_;
+}
+private:
+web_queue(){}
+std::queue<post_struct>web_q;
+std::condition_variable cond_;
+std::mutex q_m;
+};
+inline web_queue& web_queue::instance()
+{
+    static web_queue q;
+    return q;
+}
+#pragma once
+#include <unordered_map>
+#include <string>
+#include <mutex>
+#include <queue>
+#include <chrono>
+
+class RateLimiter {
+public:
+    static RateLimiter& instance() {
+        static RateLimiter rl;
+        return rl;
+    }
+
+    bool allow(const std::string& ip, int maxRequests, int seconds) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        
+        // 当前时间点（单调时钟，不会往回跳）
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        
+        // 这个 IP 的访问记录队列
+        std::queue<std::chrono::steady_clock::time_point>& records = records_[ip];
+        
+        // 清理超过时间窗口的旧记录
+        while (!records.empty()) {
+            // 队首记录距今多少秒
+            std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - records.front());
+            if (elapsed.count() > seconds) {
+                records.pop(); // 超时了，扔掉
+            } else {
+                break; // 队首还没超时，后面的更不会超时，不用继续了
+            }
+        }
+        
+        // 如果队列长度 >= 允许的最大次数，拒绝
+        if (records.size() >= maxRequests) {
+            return false;
+        }
+        
+        // 记录这次访问
+        records.push(now);
+        return true;
+    }
+
+private:
+    std::mutex mtx_;
+    std::unordered_map<std::string, std::queue<std::chrono::steady_clock::time_point>> records_;
+};
+#pragma once
+#include"bridge.h"
+#include <fstream>
+#include <iterator>
+class readchapter: public bridge{
+    public:
+    readchapter();
+    std::string send()override;
+};
+#pragma once
+#include "bridge.h"
+
+class review : public bridge {
+public:
+    review();
+    std::string send() override;
+};
+#pragma once
+#include "bridge.h"
+
+class reviewlist : public bridge {
+public:
+    reviewlist();
+    std::string send() override;
+};
+#pragma once
+#include"bridge.h"
+class rname:public bridge{
+public:
+rname();
+std::string send()override;
+};
+#pragma once
+#include"bridge.h"
+class rpassword:public bridge{
+public:
+rpassword();
+std::string send()override;
+};
+#pragma once
+#include<chrono>
+class Timestamp{
+public:
+void setnow(){
+    t_=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+}
+long long alive(){
+    return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())-t_;
+}
+private:
+std::time_t t_;
+};
+#pragma once
+#include"bridge.h"
+class updateEdit: public bridge{
+public:
+updateEdit();
+std::string send();
+};
+#pragma once
+#include<string>
+#include<functional>
+#include<iostream>
+#include<unordered_map>
+#include<muduo/net/TcpConnection.h>
+#include"postqueue.h"
+class web{
+public:
+enum ResponseStyle{
+file,
+text_html,
+json,
+video,
+audio,
+text,
+END
+};
+web();
+void setmessage(std::string message_){
+    message=message_; 
+}
+void setstyle(ResponseStyle style){
+style_=style;
+}
+void setTcpPtr(muduo::net::TcpConnectionPtr ptr){
+    ptr_=ptr;
+}
+static::std::string setpost(std::string mess);
+void run();
+static std::string error();
+private:
+//std::string response_basemodel();
+void dealget(std::string source);
+void dealpost(std::string source);
+void dealoptions(std::string source);
+
+std::string message;
+std::unordered_map<std::string,std::function<void(std::string)>>web_function;
+ResponseStyle style_;
+muduo::net::TcpConnectionPtr ptr_;
+std::unordered_map<ResponseStyle,std::string>r_style;
+std::unordered_map<std::string,ResponseStyle>s_style;
+
+};
+#pragma once
+#include"bridge.h"
+#include<string>
+class zhuche:public bridge{
+public:
+zhuche();
+std::string send()override;
+};
+#include"bookinfo.h"
+bookinfo::bookinfo(){
+    setmethodname("bookinfo");
+}
+
+std::string bookinfo::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string book_id=js["book_id"];
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select * from book where bid=";
+    word=word+mysql->escape(book_id)+";";
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    std::string bname;
+    std::string author;
+    std::string description;
+    while(row=mysql_fetch_row(res.get())){
+       bname = row[1] ? row[1] : "";
+       //std::cout<<bname<<std::endl;
+       author = row[2] ? row[2] : "";
+       description = (row[3] && row[3]) ? row[3] : "";
+    }
+    json resp;
+    resp["success"] = 1;
+    json book;
+    book["bname"] = bname;
+    book["author"] = author;
+    book["description"] = description;
+    resp["book"] = book;
+    response = resp.dump();
+    response=js_r.dump();
+    return resp.dump();
+}
+#include"booklist.h"
+booklist::booklist(){
+    setmethodname("booklist");
+}
+std::string booklist::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int page=js["page"];
+    int size=js["size"];
+    page=(page-1)*10;
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select count(*) from book";
+    auto res=mysql->find(word);
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+    int total=atoi(std::string(row[0]).c_str());
+    js_r["totalPages"]=total;
+    word="select * from book limit ";
+    word=word+mysql->escape(std::to_string(page))+","+mysql->escape(std::to_string(size))+";";
+    res=mysql->find(word);
+    js_r["books"]=json::array();
+    while(row=mysql_fetch_row(res.get())){
+        json book;
+        book["id"]=std::string(row[0]);
+        book["bname"]=std::string(row[1]);
+        book["author"]=std::string(row[2]);
+        js_r["books"].push_back(book);
+    }
+    js_r["success"]=1;
+    response=js_r.dump();
+    return response;
+}
+#include"chapterlist.h"
+chapterlist::chapterlist(){
+    setmethodname("chapterlist");
+}
+std::string chapterlist::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string bid=js["book_id"];
+    std::string word="select * from chapter where bid=";
+    
+    auto mysql=mysqlPool::instance().pop();
+    word=word+mysql->escape(bid);
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    js_r["chapters"]=json::array();
+    while(row=mysql_fetch_row(res.get())){
+        std::string cid=std::string(row[1]);
+        std::string chapter_num=std::string(row[1]);
+        std::string title=std::string(row[2]);
+        std::string status=std::string(row[4]);
+        json chap;
+        chap["id"]=cid;
+        chap["chapter_num"]=chapter_num;
+        chap["title"]=title;
+        if(status=="1"){
+            chap["status"]=status;
+        }
+        else{
+            continue;
+        }
+        js_r["chapters"].push_back(chap);
+    }
+    js_r["success"]=1;
+    response=js_r.dump();
+    return response;
+}
+#include"createbook.h"
+createbook::createbook(){
+    setmethodname("createbook");
+}
+
+std::string createbook::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string userid;
+
+    if(!js["username"].is_null()){
+        userid=js["username"];
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="没有登录";
+        response=js_r.dump();
+        return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select name from user_info where id=";
+    word=word+mysql->escape(userid)+";";
+    auto res=mysql->find(word);
+    if(res==nullptr){
+        js_r["success"]=0;
+        js_r["message"]="数据库出现问题，无姓名";
+        response=js_r.dump();
+        return response;
+    }
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+    std::string name=row[0];
+    std::string bookname=js["bname"];
+    std::string desc=js["desc"];
+    word="select bname from book where bname=";
+    word=word+"'"+mysql->escape(bookname)+"' and id="+mysql->escape(userid)+";";
+    std::cout<<word<<std::endl;
+    res=mysql->find(word);
+    row=mysql_fetch_row(res.get());
+    if(row!=nullptr){
+        js_r["success"]=0;
+        js_r["message"]="无法创建重复书籍";
+        response=js_r.dump();
+        return response;
+    }
+    word="insert into book(bname,another,description,id) value(";
+    word=word+"'"+mysql->escape(bookname)+"','"+mysql->escape(name)+"','"+mysql->escape(desc)+"',"+mysql->escape(userid)+");";
+    if(mysql->insert(word)){
+        js_r["success"]=1;
+        int bid=mysql_insert_id(mysql->outinit());
+        js_r["bid"]=std::to_string(bid);
+        js_r["message"]="创建成功";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="创建失败";
+        response=js_r.dump();
+        return response;
+    }
+}
+#include "createchapter.h"
+#include <filesystem>
+#include <fstream>
+
+createchapter::createchapter() {
+    setmethodname("uploadchapter");
+}
+
+std::string createchapter::send() {
+    json js_r;
+    json js = json::parse(message_);
+
+  
+    std::string username = js.value("username", "");
+    std::string book_id  = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string title    = js.value("title", "无标题");
+    std::string content  = js.value("content", "");
+
+    if (username.empty() || book_id.empty() || chapter_num.empty() || content.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+
+    std::string sql = "SELECT bid FROM book WHERE id=" + mysql->escape(username)  + " AND bid=" +mysql->escape(book_id) ;
+    auto res = mysql->find(sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询书籍失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row = mysql_fetch_row(res.get());
+    if (!row || !row[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "你没有该书的创作权";
+        return js_r.dump();
+    }
+
+ 
+    sql = "SELECT cid FROM chapter WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+    auto res2 = mysql->find(sql);
+    if (res2) {
+        MYSQL_ROW row2 = mysql_fetch_row(res2.get());
+        if (row2 && row2[0]) {
+            js_r["success"] = 0;
+            js_r["message"] = "该章节号已存在，请更换章节号";
+            return js_r.dump();
+        }
+    }
+
+
+    std::string dir = "../static/book/" + book_id;
+    std::filesystem::create_directories(dir);
+
+
+    std::string file_path = dir + "/" + chapter_num + ".txt";
+    std::ofstream ofs(file_path);
+    if (!ofs) {
+        js_r["success"] = 0;
+        js_r["message"] = "文件创建失败";
+        return js_r.dump();
+    }
+    ofs << content;
+    ofs.close();
+
+
+    std::string absolute_path = std::filesystem::absolute(file_path).string();
+
+  
+    sql = "INSERT INTO chapter (bid, cid, title, file_path, status) VALUES ("
+          +mysql->escape(book_id) + "," +mysql->escape(chapter_num) + ",'" +mysql->escape(title) + "','" + mysql->escape(absolute_path) + "', 0)";
+
+    if (mysql->insert(sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "上传成功，等待审核";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库插入失败";
+    }
+
+    return js_r.dump();
+}
+#include"db.h"
+MySql::MySql(){
+    mysql = mysql_init(nullptr);
+    if (!mysql) {
+        std::cerr << "mysql初始化失败" << std::endl;
+        exit(1);
+    }
+    if(!mysql_real_connect(
+        mysql,
+        "localhost",
+        "root",
+        "123456",
+        "readbook",
+        3306,
+        nullptr,
+        0
+    )){
+
+        std::cout<<"连接失败"<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+    mysql_query(mysql, "SET NAMES utf8mb4");
+}
+MySql::~MySql(){
+    mysql_close(mysql);
+}
+bool MySql::insert(std::string word){
+if(word.empty()){
+    std::cout<<"无插入语句\n";
+    return false;
+}
+int n=mysql_query(mysql,word.c_str());
+if(n==0){
+    return true;
+}
+else{
+    std::cout<<"插入失败"<<mysql_error(mysql)<<std::endl;
+    return false;
+}
+}
+
+ std::shared_ptr<MYSQL_RES> MySql::find(std::string word){
+    if(word.empty()){
+    std::cout<<"无插入语句\n";
+    return nullptr;
+}
+int n=mysql_query(mysql,word.c_str());
+MYSQL_RES* res=mysql_store_result(mysql);
+if(n==0){
+    std::shared_ptr<MYSQL_RES>res_(res,[](MYSQL_RES* res){
+        mysql_free_result(res);
+    });
+    return res_;
+}
+else{
+    std::cout<<"更新失败"<<std::endl;
+    return nullptr;
+}
+}
+
+bool MySql::update(std::string word){
+if(word.empty()){
+    std::cout<<"无插入语句\n";
+    return false;
+}
+int n=mysql_query(mysql,word.c_str());
+if(n==0){
+    return true;
+}
+else{
+    std::cout<<"更新失败"<<mysql_error(mysql)<<std::endl;
+    return false;
+}
+}
+
+std::string MySql::escape(const std::string& input){
+    if(input.empty())return "";
+    char* escape=new char[input.size()*2+1];
+    mysql_real_escape_string(mysql,escape,input.c_str(),input.size());
+    std::string result(escape);
+    delete[] escape;
+    return result;
+}
+#include "editchapter.h"
+
+editchapter::editchapter() {
+    setmethodname("editchapter");
+}
+
+std::string editchapter::send() {
+    json js_r;
+    json js = json::parse(message_);
+
+    // 1. 安全取值
+    std::string username = js.value("username", "");
+    std::string book_id  = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string new_title = js.value("title", "");
+    std::string new_content = js.value("content", "");
+
+    if (username.empty() || book_id.empty() || chapter_num.empty() || new_content.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+    // 2. 校验书籍是否属于当前用户
+    std::string check_sql = "SELECT bid FROM book WHERE id=" + mysql->escape(username)  + " AND bid=" + mysql->escape(book_id) ;
+    auto res = mysql->find(check_sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询书籍失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row = mysql_fetch_row(res.get());
+    if (!row || !row[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "你没有该书的创作权";
+        return js_r.dump();
+    }
+
+    // 3. 查询该章节是否存在，并获取原文件路径
+    std::string get_sql = "SELECT file_path FROM chapter WHERE bid=" + mysql->escape(book_id)  + " AND cid=" + mysql->escape(chapter_num) ;
+    auto res2 = mysql->find(get_sql);
+    if (!res2) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询章节失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row2 = mysql_fetch_row(res2.get());
+    if (!row2 || !row2[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "该章节不存在";
+        return js_r.dump();
+    }
+    std::string file_path = row2[0];
+
+    // 4. 覆盖写入文件
+    std::ofstream ofs(file_path);
+    if (!ofs) {
+        js_r["success"] = 0;
+        js_r["message"] = "文件写入失败";
+        return js_r.dump();
+    }
+    ofs << new_content;
+    ofs.close();
+
+    // 5. 更新数据库中的标题，并将状态重置为待审核（0）
+    std::string update_sql = "UPDATE chapter SET title='" + mysql->escape(new_title) + "', status=0 WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+    if (mysql->update(update_sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "修改成功，等待重新审核";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库更新失败";
+    }
+
+    return js_r.dump();
+}
+#include"find.h"
+find::find(){
+    setmethodname("find");
+}
+std::string find::send(){
+    std::string response;
+    json js_r;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+        std::cout<<"进入if\n";
+    std::string idStr = js["username"];
+    std::cout<<idStr<<std::endl;
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    std::cout<<"进入else\n";
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word;
+    word="select * from user_info where id=";
+    word=word+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    
+    js_r["success"]=1;
+    while(row=mysql_fetch_row(res.get())){
+        std::cout<<"成功"<<std::endl;
+        js_r["name"]=row[1];
+        js_r["sex"]=row[2];
+        js_r["intre"]=row[3];
+    }
+
+    word="select role from user_pos where id=";
+    word=word+mysql->escape(std::to_string(id))+";";
+    res=mysql->find(word);
+    std::cout<<word<<std::endl;
+    while(row=mysql_fetch_row(res.get())){
+        std::string role(row[0]);
+        if(role=="1"){
+            js_r["role"]="manger";
+        }
+        else if(role=="0"){
+            js_r["role"]="reader";
+        }
+    }
+
+    response=js_r.dump();
+    return response;
+}
+#include"HttpServer.h"
+#include<iostream>
+#include<thread>
+#include<condition_variable>
+#include"web.h"
+HttpServer::HttpServer():addr_(readfile()),tcpserver_(&loop_,addr_,"httpserver"){
+    //tcpserver_.setReuseAddr(true);
+    tcpserver_.setConnectionCallback(bind(&HttpServer::onConnection,this,std::placeholders::_1));
+    tcpserver_.setMessageCallback(bind(&HttpServer::onMessage,this,std::placeholders::_1,std::placeholders::_2,std::placeholders::_3));
+    std::thread t1(&HttpServer::handlequeue,this);
+    t1.detach();
+}
+// void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn){
+//     if(!conn->connected()){
+//         std::cout<<"__关闭"<<std::endl;
+//         conn->shutdown();
+//     }
+// }
+
+void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn) {
+    if (!conn->connected()) {
+        std::cout << "__关闭" << std::endl;
+        connBuf_.erase(conn.get());  // 清除累积数据
+        conn->shutdown();
+    }
+}
+// void HttpServer::onMessage(const muduo::net::TcpConnectionPtr& conn,
+//                             muduo::net::Buffer* buffer_,
+//                             muduo::Timestamp){
+//                                 std::string message=buffer_->retrieveAllAsString();
+//                                 std::cout<<message<<std::endl;
+//                                 web b;
+//                                 b.setmessage(message);
+//                                 b.setTcpPtr(conn);
+//                                 b.run();
+//                             }
+        
+void HttpServer::onMessage(const muduo::net::TcpConnectionPtr& conn,
+                            muduo::net::Buffer* buf,
+                            muduo::Timestamp) {
+    // 1. 将新数据追加到该连接的累积缓冲区
+    std::string& allData = connBuf_[conn.get()];
+    allData += buf->retrieveAllAsString();
+
+    while (true) {
+        // 2. 检查是否收到完整的 HTTP 请求头（以 \r\n\r\n 结束）
+        size_t headerEnd = allData.find("\r\n\r\n");
+        if (headerEnd == std::string::npos) {
+            break;  // 头部还没收完，等待下一次数据
+        }
+
+        // 3. 尝试解析 Content-Length
+        size_t clPos = allData.find("Content-Length:");
+        bool hasBody = (clPos != std::string::npos && clPos < headerEnd);
+        int contentLen = 0;
+
+        if (hasBody) {
+            clPos += 15; // "Content-Length:" 长度
+            size_t clEnd = allData.find("\r\n", clPos);
+            contentLen = std::stoi(allData.substr(clPos, clEnd - clPos));
+        }
+
+        size_t totalLen = headerEnd + 4 + contentLen;
+        if (allData.size() < totalLen) {
+            break;  // 请求体还没收全，等待下次数据
+        }
+
+        // 4. 提取一个完整的请求报文
+        std::string fullRequest = allData.substr(0, totalLen);
+        allData.erase(0, totalLen);  // 从缓冲区移除已处理的数据
+
+        // 5. 交给 web 模块处理
+        std::cout << fullRequest << std::endl;
+        web b;
+        b.setmessage(fullRequest);
+        b.setTcpPtr(conn);
+        b.run();
+    }
+}
+muduo::net::InetAddress HttpServer::readfile(){
+    //std::cout<<"开始"<<std::endl;
+    FILE* f=fopen("net.txt","r");
+    if(f==nullptr){
+        std::cout<<__FILE__<<":"<<__LINE__<<"出现错误,"<<f<<"文件无法打开"<<strerror(errno)<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+    while(!feof(f)){
+        char buf[1024];
+        fgets(buf,1024,f);
+        std::string buf_(buf);
+        int n=buf_.find_first_not_of(" ");
+        buf_=buf_.substr(n);
+        n=buf_.find_last_not_of("\n");
+        buf_=buf_.substr(0,n+1);
+        n=buf_.find_last_not_of(" ");
+        buf_=buf_.substr(0,n+1);
+        n=buf_.find('=');
+        if(n==std::string::npos){
+            std::cout<<__FILE__<<":"<<__LINE__<<"行："<<f<<"文本格式出现问题"<<std::endl;
+            exit(EXIT_FAILURE);
+        }
+        std::string key=buf_.substr(0,n);
+        std::string value=buf_.substr(n+1);
+        if(key=="ip"){
+            ip=value;
+        }
+        else if(key=="port"){
+            port=atoi(value.c_str());
+        }
+    }
+    std::cout<<ip<<" "<<port<<std::endl;
+    return muduo::net::InetAddress(ip,port);
+}  
+
+void HttpServer::run(){
+   tcpserver_.setThreadNum(4);
+    tcpserver_.start();
+    loop_.loop();
+}
+
+void HttpServer::handlequeue(){
+    while(1){
+        post_struct q=web_queue::instance().pop();
+        if(b_.count(q.method)){
+             b_[q.method]->setConnection(q.ptr_);
+            b_[q.method]->setmessage(q.data);
+            std::string response=b_[q.method]->send();
+           
+            response=web::setpost(response);
+            q.ptr_->getLoop()->runInLoop([conn = q.ptr_, resp = response]() {
+                conn->send(resp);
+                });
+        }
+        else{
+             q.ptr_->getLoop()->runInLoop([conn = q.ptr_]() {
+                conn->send(web::error());
+                });
+        }
+    }
+}
+
+std::unordered_map<std::string,muduo::net::TcpConnectionPtr>HttpServer::IdOfConn;
+#include"login.h"
+std::unordered_map<std::string,int>login::users;
+std::mutex login::login_mutex;
+#include "HttpServer.h"
+#include"zhuche.h"
+#include"login.h"
+#include"find.h"
+#include"rname.h"
+#include"rpassword.h"
+#include"booklist.h"
+#include"chapterlist.h"
+#include"readchapter.h"
+#include"bookinfo.h"
+#include"createbook.h"
+#include"updateEdit.h"
+#include"createchapter.h"
+#include"editchapter.h"
+#include "reviewlist.h"
+#include "review.h"
+int main() {
+    HttpServer server_;
+
+    // 注册业务模块（在服务器启动之前）
+    auto loginBridge=std::make_shared<login>();
+    auto zhucheRridge=std::make_shared<zhuche>();
+    auto findRridge=std::make_shared<find>();
+    auto rnameRridge=std::make_shared<rname>();
+    auto rpasswordRridge=std::shared_ptr<rpassword>(new rpassword());
+    auto booklistBridge=std::shared_ptr<booklist>(new booklist());
+    auto chapterlistBridge=std::shared_ptr<chapterlist>(new chapterlist());
+    auto readchaperBrdge=std::shared_ptr<readchapter>(new readchapter());
+    auto bookinfoBridge=std::shared_ptr<bookinfo>(new bookinfo());
+    auto createbookBridge=std::shared_ptr<createbook>(new createbook());
+    auto updateEditBridge=std::shared_ptr<updateEdit>(new updateEdit());
+    auto createchapterBridge=std::shared_ptr<createchapter>(new createchapter());
+    auto editChapterBridge = std::make_shared<editchapter>();
+    auto reviewlistBridge = std::make_shared<reviewlist>();
+auto reviewBridge = std::make_shared<review>();
+server_.setbridge(reviewlistBridge);
+server_.setbridge(reviewBridge);
+    server_.setbridge(editChapterBridge);
+    server_.setbridge(findRridge);
+    server_.setbridge(zhucheRridge);
+    server_.setbridge(loginBridge);
+    server_.setbridge(rnameRridge);
+    server_.setbridge(rpasswordRridge);
+    server_.setbridge(booklistBridge);
+    server_.setbridge(chapterlistBridge);
+    server_.setbridge(readchaperBrdge);
+    server_.setbridge(bookinfoBridge);
+    server_.setbridge(createbookBridge);
+    server_.setbridge(updateEditBridge);
+    server_.setbridge(createchapterBridge);
+    // auto loginBridge = std::make_shared<LoginBridge>();
+    // server_.setbridge(loginBridge);
+
+    server_.run();
+    return 0;
+}
+#include"mysqlpool.h"
+std::atomic_bool mysql_pool=false;
+mysqlPool& mysqlPool::instance(){
+static mysqlPool pool_;
+return pool_;
+}
+mysqlPool::mysqlPool(){
+    maxnum_=1024;
+    minnum_=4;
+    num_=4;
+    for(int i=0;i<num_;i++){
+        MySql* mysql=new MySql();
+        mysql->settime();
+        q.push(mysql);
+    }
+    std::thread t1(&mysqlPool::destory,this);
+    t1.detach();
+}
+
+std::shared_ptr<MySql> mysqlPool::pop(){
+    std::unique_lock<std::mutex>lock(mtx_);
+    if(q.empty()){
+        if(num_<maxnum_){
+            MySql* mysql=new MySql();
+            mysql->settime();
+            q.push(mysql);
+            num_++;
+        }
+        else{
+            std::cout<<"以及到达上限"<<std::endl;
+            return nullptr;
+        }
+    }
+    std::shared_ptr<MySql>s_p(q.front(),[this](MySql* q){
+        if(mysql_pool){
+            delete q;
+            q=nullptr;
+        }
+        else{
+        q->settime();
+        {
+            std::unique_lock<std::mutex>lock(this->mtx_);
+            this->q.push(q);
+        }
+        this->cond_.notify_one();
+        }
+    });
+    q.pop();
+    return s_p;
+} 
+
+void mysqlPool::destory(){
+    while(1){
+        std::unique_lock<std::mutex>lock(mtx_);
+        while(num_<=minnum_&&!mysql_pool){
+            cond_.wait(lock);
+        }
+        if (mysql_pool) break;
+        if(!q.empty()&&q.front()->gettime()>=300){
+            delete q.front();
+            q.front()=nullptr;
+            q.pop();
+            num_--;
+        }
+    }
+}
+mysqlPool::~mysqlPool(){
+    mysql_pool=true;
+    cond_.notify_all();        
+    std::lock_guard<std::mutex> lock(mtx_);
+    while(!q.empty()){
+         delete q.front();
+            q.front()=nullptr;
+            q.pop();
+            num_--;
+    }
+}
+#include"readchapter.h"
+readchapter::readchapter(){
+    setmethodname("readchapter");
+}
+std::string readchapter::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    if(js["book_id"].is_null()||js["chapter_id"].is_null()){
+        return R"({"success":0,"message":"参数缺失"})";
+    }
+    std::string bid = js.value("book_id", "");  
+    std::string cid = js.value("chapter_id", "");
+    
+   if (bid.empty() || cid.empty()) {
+    return R"({"success":0,"message":"参数缺失"})";
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select file_path from chapter where bid=";
+    word=word+mysql->escape(bid) +" and cid="+ mysql->escape(cid)+";";
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    row=mysql_fetch_row(res.get());
+    if (!row) {
+    return R"({"success":0,"message":"章节不存在"})";
+}
+    std::string path=std::string(row[0]);
+    std::ifstream f(path);
+    if (!std::filesystem::is_regular_file(path)) {//判断是不是普通文件
+    js_r["success"] = 0;
+    js_r["message"] = "文件无效或不存在";
+    response = js_r.dump();
+    return response;
+}
+    if(!f){
+        js_r["success"]=0;
+        response=js_r.dump();
+        return response; 
+    }
+    std::string content{std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>()};//一次性读完
+    js_r["success"]=1;
+    js_r["content"]=content;
+    response=js_r.dump();
+    return response;
+}
+#include "review.h"
+
+review::review() {
+    setmethodname("review");
+}
+
+std::string review::send() {
+    json js_r;
+    json js = json::parse(message_);
+    std::string userid = js.value("userid", "");
+    std::string book_id = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string action = js.value("action", "");
+
+    if (userid.empty() || book_id.empty() || chapter_num.empty() || action.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+   
+    std::string roleSql = "select role from user_pos where id=" + mysql->escape(userid) + ";";
+    auto roleRes = mysql->find(roleSql);
+    MYSQL_ROW roleRow = mysql_fetch_row(roleRes.get());
+    if (!roleRow || std::string(roleRow[0]) == "0") {
+        js_r["success"] = 0;
+        js_r["message"] = "无审核权限";
+        return js_r.dump();
+    }
+
+    int new_status = (action == "approve") ? 1 : 2;
+    std::string sql = "UPDATE chapter SET status=" + mysql->escape(std::to_string(new_status)) +
+                      " WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+
+    if (mysql->update(sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "审核完成";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库更新失败";
+    }
+    return js_r.dump();
+}
+#include "reviewlist.h"
+
+reviewlist::reviewlist() {
+    setmethodname("reviewlist");
+}
+
+std::string reviewlist::send() {
+    json js_r;
+    json js = json::parse(message_);
+    std::string userid = js.value("userid", "");
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+    // 权限校验
+    std::string roleSql = "select role from user_pos where id=" + mysql->escape(userid) + ";";
+    auto roleRes = mysql->find(roleSql);
+    MYSQL_ROW roleRow = mysql_fetch_row(roleRes.get());
+    if (!roleRow || std::string(roleRow[0]) == "0") {
+        js_r["success"] = 0;
+        js_r["message"] = "无审核权限";
+        return js_r.dump();
+    }
+
+    // 查询所有 status=0 的章节
+    std::string sql = "SELECT c.bid, c.cid, c.title, c.status, b.bname "
+                      "FROM chapter c JOIN book b ON c.bid = b.bid "
+                      "WHERE c.status = 0 ORDER BY c.bid, c.cid";
+    auto res = mysql->find(sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询失败";
+        return js_r.dump();
+    }
+
+    js_r["chapters"] = json::array();
+    MYSQL_ROW chRow;
+    while ((chRow = mysql_fetch_row(res.get()))) {
+        json ch;
+        ch["book_id"] = chRow[0];
+        ch["chapter_num"] = chRow[1];
+        ch["title"] = chRow[2] ? chRow[2] : "";
+        ch["book_name"] = chRow[4] ? chRow[4] : "";
+        js_r["chapters"].push_back(ch);
+    }
+    js_r["success"] = 1;
+    return js_r.dump();
+}
+#include"rname.h"
+rname::rname(){
+    setmethodname("rname");
+}
+
+std::string rname::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+    std::string idStr = js["username"];
+    std::cout<<idStr<<std::endl;
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string name=js["name"];
+    std::string sex=js["sex"];
+    std::string intre=js["intre"];
+    std::string word="update user_info set name='";
+    word=word+mysql->escape(name)+"',sex='"+mysql->escape(sex)+"',intro='"+mysql->escape(intre)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    
+    mysql->update(word);
+    word="update book set another='";
+    word=word+mysql->escape(name)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    mysql->update(word);
+    js_r["success"]=1;
+    js_r["message"]="修改成功";
+    response=js_r.dump();
+    return response;
+}
+#include"rpassword.h"
+#include"addSave.h"
+rpassword::rpassword(){
+    setmethodname("rpassword");
+}
+std::string rpassword::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+    std::string idStr = js["username"];
+    std::cout<<idStr<<std::endl;
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string password=js["password"];
+    std::string salt = "readbook_2026.6.18";   
+    std::string hashed = sha256(salt + password); 
+    std::string word="update users set password='";
+    word=word+mysql->escape(hashed)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    
+    mysql->update(word);
+    js_r["success"]=1;
+    js_r["message"]="密码修改成功";
+    response=js_r.dump();
+    return response;
+}
+#include"updateEdit.h"
+updateEdit::updateEdit(){
+    setmethodname("updateEdit");
+}
+std::string updateEdit::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    auto mysql=mysqlPool::instance().pop();
+    std::string id;
+    if(js["username"].is_null()){
+        js["success"]=0;
+        js["message"]="未登录";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        id=js["username"];
+    }
+    std::string bid=js["bid"];
+    std::string bname=js["bname"];
+    std::string edit=js["edit"];
+    std::string word="select id from book where bid=";
+    word=word+mysql->escape(bid)+" and bname='"+mysql->escape(bname)+"';";
+    auto res=mysql->find(word);
+    if(res==nullptr){
+        js_r["success"]=0;
+        js_r["message"]="无效字段";
+        response=js_r.dump();
+        return response;
+    }
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+     if(!row||row[0]==NULL){
+        js_r["success"]=0;
+        js_r["message"]="没有这本书或者不是该书作者";
+        response=js_r.dump();
+        return response;
+    }
+    std::string true_id=row[0];
+
+    if(true_id!=id){
+        js_r["success"]=0;
+        js_r["message"]="你不是该书作者，无法更改";
+        response=js_r.dump();
+        return response;
+    }
+    word="update book set description='";
+    word=word+mysql->escape(edit)+"' where bid="+mysql->escape(bid)+";";
+    if(mysql->update(word)){
+        js_r["success"]=1;
+        js_r["message"]="修改成功";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="更新失败";
+        response=js_r.dump();
+        return response;
+    }
+}
+#include"web.h"
+#include"HttpServer.h"
+web::web(){
+    web_function.insert({"POST",[this](std::string resource){
+        dealpost(resource);
+    }});
+     web_function.insert({"GET",[this](std::string resource){
+        dealget(resource);
+    }});
+     web_function.insert({"OPTIONS",[this](std::string resource){
+        dealoptions(resource);
+    }});
+    r_style.insert({ResponseStyle::text,"Content-Type: text/plain; charset=utf-8"});
+    r_style.insert({ResponseStyle::json,"Content-Type: application/json; charset=utf-8"});
+    r_style.insert({ResponseStyle::file,"Content-Type: text/html; charset=utf-8"});
+    r_style.insert({ResponseStyle::video, "Content-Type: video/mp4"});
+    r_style.insert({ResponseStyle::audio, "Content-Type: audio/mpeg"});
+
+    s_style.insert({"html",ResponseStyle::file});
+    s_style.insert({"txt",ResponseStyle::text});
+    s_style.insert({"json",ResponseStyle::json});
+}
+
+void web::run(){
+    std::string temp_message=message;
+    if(message.empty()){
+        std::cout<<"无事件处理，请设置事件"<<" "<<__FILE__<<" "<<__LINE__<<std::endl;
+        return;
+    }
+    int n=message.find_first_not_of(" ");
+    if(n==std::string::npos){
+        std::cout<<"格式错误"<<" "<<__FILE__<<" "<<__LINE__<<std::endl;
+    }
+    int m=message.find(" ");
+    std::string response=message.substr(n,m-n);
+    if(web_function.count(response)){
+    std::function<void(std::string)>responseBack=web_function[response];
+    temp_message=temp_message.substr(m+1);
+    m=temp_message.find(" ");
+    std::string source=temp_message.substr(0,m);
+    responseBack(source);
+    }
+}
+
+void web::dealget(std::string source){
+    if (source.find("..") != std::string::npos) {
+        ptr_->send(error());
+        return;
+    }
+    size_t q_pos = source.find('?');
+    if (q_pos != std::string::npos) {
+        source = source.substr(0, q_pos);
+    }
+    std::string root = "../static";
+    root+=source;
+    FILE* f=fopen(root.c_str(),"rb");
+    if(f==nullptr){
+        ptr_->send(error());
+        return;
+    }
+    else if(f!=nullptr){
+    int n=source.find_last_of('.');
+    if(n==std::string::npos){
+        ptr_->send(error());
+        return;
+    }
+    std::string f_file=source.substr(n+1);
+    // 1. 跳到文件末尾
+    fseek(f, 0, SEEK_END);
+// 2. 获取当前偏移 = 文件总字节数
+long fileSize = ftell(f);
+// 3. 切回文件开头，准备读取内容
+    rewind(f);
+    std::string temp_r="http/1.1 200 ok \r\n";
+    std::string style_=r_style[s_style[f_file]];
+    //temp_r+="Content-Type:";
+    temp_r+=style_;
+    temp_r+="\r\n";
+    temp_r+="Content-Length:";
+    temp_r=temp_r+std::to_string(fileSize)+"\r\n\r\n";
+    char* buf = new char[fileSize];
+    fread(buf, 1, fileSize, f);
+    temp_r.append(buf, fileSize);
+    ptr_->send(temp_r);
+    delete[] buf;
+    fclose(f);
+    }
+    else{
+        ptr_->send(error());
+        return;
+    }
+}
+void web::dealpost(std::string source) {
+    if (source.empty()) return;
+    if (source[0] == '/') source.erase(source.begin());
+
+    // 1. 找到头部结束位置（第一个 \r\n\r\n）
+    size_t header_end = message.find("\r\n\r\n");
+    if (header_end == std::string::npos) return;
+
+    // 2. 解析 Content-Length 头部
+    size_t cl_pos = message.find("Content-Length:");
+    if (cl_pos == std::string::npos || cl_pos > header_end) return;   // 没有 Content-Length，放弃
+    cl_pos += 15;  // "Content-Length:" 长度
+    size_t cl_end = message.find("\r\n", cl_pos);
+    std::string cl_str = message.substr(cl_pos, cl_end - cl_pos);
+    int content_length = std::stoi(cl_str);
+
+    // 3. 检查 body 是否已完整接收
+    size_t body_start = header_end + 4;
+    if (message.size() < body_start + content_length) {
+        return;   // 数据还没收全，等下次 onMessage 再处理
+    }
+
+    // 4. 精确截取 body
+    std::string temp_message_data = message.substr(body_start, content_length);
+
+    std::cout << "开始储存" << std::endl;
+    HttpServer::IdOfConn.insert({temp_message_data, ptr_});
+    web_queue::instance().push({source, temp_message_data, ptr_});
+}
+void web::dealoptions(std::string source){
+    std::string response="HTTP/1.1 204 No Content\r\n";//204服务器处理成功
+            response+="Access-Control-Allow-Origin: *\r\n";//我允许任何人请求
+            response+="Access-Control-Allow-Methods:GET,POST,OPTIONS\r\n";//我允许这些方法
+            response += "Access-Control-Allow-Headers: Content-Type\r\n"; //3.允许文本格式
+            response+="\r\n";
+            ptr_->send(response);
+}
+
+std::string web::setpost(std::string mess){
+     std::string resp;
+    resp += "HTTP/1.1 200 OK\r\n";
+    resp += "Content-Type: application/json; charset=utf-8\r\n";
+    resp += "Access-Control-Allow-Origin: *\r\n"; 
+    resp += "Content-Length: " + std::to_string(mess.size()) + "\r\n";
+    resp += "\r\n"; 
+    resp += mess;
+    return resp;
+}
+std::string web::error()
+    {
+                                std::string response="HTTP/1.1 404 Not Found\r\n";
+                                response+="Content-Type:text/html; charset=utf-8\r\n";
+                                response+="Content-Length:13\r\n";
+                                response+="\r\n";
+                                response+="404 Not Found";
+                                return response;
+}
+#include"zhuche.h"
+#include"addSave.h"
+#include"RateLimiter.h"
+zhuche::zhuche(){
+    setmethodname("zhuche");
+}
+std::string zhuche::send(){
+    std::string ip = getClientIP();  
+    if (!RateLimiter::instance().allow(ip, 3, 120)) {  
+        return R"({"success":0,"message":"注册太频繁，请稍后再试"})";
+    }
+    std::string response;
+    json js=json::parse(message_);
+    std::string password=js["password"];
+    std::string salt = "readbook_2026.6.18";   
+    std::string hashed = sha256(salt + password); 
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="insert into users(password) value('";
+    word=word+mysql->escape(hashed)+"');";
+    if(mysql->insert(word)){
+    int id=mysql_insert_id(mysql->outinit());
+    std::string name=js["name"];
+    std::string intor=js["jieshao"];
+    std::string sex=js["sex"];
+    word="insert into user_info(id,name,sex,intro) value(";
+    word=word+mysql->escape(std::to_string(id))+",'"+mysql->escape(name)+"','"+mysql->escape(sex)+"','"+mysql->escape(intor)+"')";
+    if(mysql->insert(word)){
+
+        word="insert into user_pos(id,role) value(";
+        word=word+mysql->escape(std::to_string(id))+","+"0);";
+        if(!mysql->insert(word)){
+            json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+        }
+        json js_r;
+        js_r["success"]=1;
+        js_r["message"]="注册成功";
+        js_r["username"]=id;
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+    }
+    }
+    else{
+        json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+    }
+}
+前端
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书籍详情</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-image: url("img/groud.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+        }
+        #headtop .left {
+            cursor: pointer;
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            font-weight: bold;
+        }
+        #headtop .right a {
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .book-hero {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            max-width: 600px;
+        }
+        .book-cover-large {
+            width: 120px;
+            height: 160px;
+            background: #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            flex-shrink: 0;
+        }
+        .book-info {
+            flex: 1;
+        }
+        .book-info h1 {
+            margin: 0 0 5px 0;
+            color: black;
+        }
+        .book-info .author {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .book-info .desc {
+            color: #222;
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 1;
+        }
+        .chapter-section {
+            width: 90%;
+            max-width: 700px;
+            margin: 20px 0;
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .chapter-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chapter-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .chapter-item:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .loading { text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <div class="left" id="backToBookCity">📚 返回书城</div>
+        <div class="right">
+            <!-- 返回首页也使用相对路径 -->
+            <a href="menu.html">返回首页</a>
+        </div>
+    </div>
+
+    <div class="book-hero">
+        <div class="book-cover-large">📖</div>
+        <div class="book-info">
+            <h1 id="bookTitle">加载中...</h1>
+            <div class="author" id="bookAuthor">作者：--</div>
+            <div class="desc" id="bookDesc">简介：--</div>
+        </div>
+    </div>
+
+    <div class="chapter-section">
+        <h2 style="text-align:center;">📜 章节列表</h2>
+        <div class="chapter-list" id="chapterList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 动态获取当前访问根路径，不再写死 IP
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = 'login.html';
+        }
+
+        function getQueryParam(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        var bookId = getQueryParam('id');
+        var bookName = getQueryParam('name') || '未知书籍';
+
+        if (!bookId) {
+            alert('书籍ID无效');
+            window.location.href = 'menu.html';
+        }
+
+        document.getElementById('backToBookCity').onclick = function() {
+            window.location.href = 'menu.html';
+        };
+
+        // 加载书籍基本信息（使用 baseUrl 动态拼接请求地址）
+        function loadBookInfo() {
+            fetch(baseUrl + '/bookinfo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                var info = (data && data.book) ? data.book : {};
+                document.getElementById('bookTitle').textContent = info.bname || bookName || '未知书籍';
+                document.getElementById('bookAuthor').textContent = '作者：' + (info.author || '佚名');
+                document.getElementById('bookDesc').textContent = info.description || '暂无简介';
+            })
+            .catch(() => {
+                document.getElementById('bookTitle').textContent = bookName || '未知书籍';
+                document.getElementById('bookAuthor').textContent = '作者：佚名';
+                document.getElementById('bookDesc').textContent = '暂无简介';
+            });
+        }
+
+        function loadChapters() {
+            fetch(baseUrl + '/chapterlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                var container = document.getElementById('chapterList');
+                container.innerHTML = '';
+                if (data.success === 1 && data.chapters && data.chapters.length > 0) {
+                    data.chapters.forEach(function(ch) {
+                        var item = document.createElement('div');
+                        item.className = 'chapter-item';
+                        item.innerHTML = '<span>第' + ch.chapter_num + '章 ' + ch.title + '</span><span style="color:lightgreen;">免费</span>';
+                        item.onclick = function() {
+                            sessionStorage.setItem('userId', userId);
+                            // 使用相对路径跳转到阅读页，携带完整参数
+                            window.location.href = 'read.html?chapter_id=' + ch.id 
+                                + '&book_id=' + bookId 
+                                + '&book_name=' + encodeURIComponent(bookName) 
+                                + '&title=' + encodeURIComponent(ch.title);
+                        };
+                        container.appendChild(item);
+                    });
+                } else {
+                    container.innerHTML = '<div class="loading">暂无章节</div>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('chapterList').innerHTML = '<div class="loading">加载失败</div>';
+            });
+        }
+
+        // 初始化
+        loadBookInfo();
+        loadChapters();
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核列表 - 小说平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        #headtop { width: 100%; height: 50px; background: rgba(0,0,0,0.65); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; box-sizing: border-box; backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 10; }
+        #headtop a { background: aqua; padding: 8px 20px; border-radius: 20px; color: #000; text-decoration: none; font-weight: bold; transition: background 0.2s; font-size: 15px; }
+        #headtop a:hover { background: #00cccc; }
+        .container { width: 90%; max-width: 900px; margin: 30px 0; }
+        h1 { text-align: center; color: aqua; font-size: 28px; margin-bottom: 10px; }
+        .user-info { text-align: center; color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .user-info span { color: aqua; font-weight: bold; }
+        .review-card { background: rgba(255,255,255,0.08); backdrop-filter: blur(15px); border-radius: 20px; padding: 20px 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+        .table-header { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: bold; color: aqua; font-size: 15px; }
+        .table-row { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; transition: background 0.2s; cursor: pointer; }
+        .table-row:last-child { border-bottom: none; }
+        .table-row:hover { background: rgba(255,255,255,0.05); }
+        .book-title { font-size: 15px; font-weight: 500; }
+        .chapter-num { color: #ccc; font-size: 14px; }
+        .status-badge { font-size: 13px; background: rgba(255,170,0,0.2); color: #ffaa00; padding: 4px 12px; border-radius: 20px; display: inline-block; width: fit-content; }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <a href="person.html">👤 个人页面</a>
+        <a href="menu.html">📚 返回书城</a>
+    </div>
+
+    <div class="container">
+        <h1>🔍 章节审核</h1>
+        <div class="user-info">审核员ID：<span id="reviewerIdDisplay">（从URL获取）</span></div>
+        <div class="review-card">
+            <div class="table-header">
+                <div>书籍 / 章节标题</div>
+                <div>章节号</div>
+                <div>状态</div>
+            </div>
+            <div id="reviewList"></div>
+        </div>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var urlParams = new URLSearchParams(window.location.search);
+        var userId = urlParams.get('userid') || sessionStorage.getItem('userId');
+        document.getElementById('reviewerIdDisplay').textContent = userId || '未提供';
+
+        function loadReviewList() {
+            var container = document.getElementById('reviewList');
+            container.innerHTML = '<div style="text-align:center;padding:30px;">加载中...</div>';
+            fetch(baseUrl + '/reviewlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userid: userId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
+                if (data.success === 1 && data.chapters && data.chapters.length > 0) {
+                    data.chapters.forEach(function(ch) {
+                        var row = document.createElement('div');
+                        row.className = 'table-row';
+                        row.innerHTML = `
+                            <div class="book-title">${ch.book_name} · ${ch.title}</div>
+                            <div class="chapter-num">第${ch.chapter_num}章</div>
+                            <div><span class="status-badge">待审核</span></div>
+                        `;
+                        row.onclick = function() {
+                            // 跳转到审核详情页，使用相对路径
+                            window.location.href = 'checkbook.html?'
+                                + 'userid=' + userId
+                                + '&book_id=' + ch.book_id
+                                + '&chapter_num=' + ch.chapter_num;
+                        };
+                        container.appendChild(row);
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">暂无待审核章节</div>';
+                }
+            })
+            .catch(err => {
+                container.innerHTML = '<div style="text-align:center;padding:30px;color:#ff6b6b;">加载失败，请稍后重试</div>';
+                console.error(err);
+            });
+        }
+
+        loadReviewList();
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核详情 - 小说平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        #headtop { width: 100%; height: 50px; background: rgba(0,0,0,0.65); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; box-sizing: border-box; backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 10; }
+        #headtop a { background: aqua; padding: 8px 20px; border-radius: 20px; color: #000; text-decoration: none; font-weight: bold; transition: background 0.2s; font-size: 15px; }
+        #headtop a:hover { background: #00cccc; }
+        .container { width: 90%; max-width: 800px; margin: 30px 0; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(15px); border-radius: 20px; padding: 20px 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+        h1 { text-align: center; color: aqua; font-size: 26px; margin-bottom: 5px; }
+        .sub-info { text-align: center; color: #aaa; font-size: 14px; margin-bottom: 20px; }
+        .info-label { font-weight: bold; color: #ccc; margin-bottom: 8px; font-size: 15px; }
+        .title-display { background: rgba(0,0,0,0.3); padding: 12px 16px; border-radius: 10px; font-size: 18px; font-weight: bold; color: aqua; border: 1px solid rgba(255,255,255,0.1); }
+        .content-display { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; font-size: 16px; line-height: 1.8; white-space: pre-wrap; min-height: 300px; border: 1px solid rgba(255,255,255,0.1); color: #ddd; }
+        .btn-row { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        .btn { padding: 12px 30px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+        .btn-approve { background: aqua; color: #000; }
+        .btn-approve:hover { background: #00e6e6; }
+        .btn-reject { background: rgba(255,100,100,0.3); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .btn-reject:hover { background: rgba(255,100,100,0.5); }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <a href="person.html">👤 个人页面</a>
+        <a href="menu.html">📚 返回书城</a>
+    </div>
+
+    <div class="container">
+        <h1>📄 章节审核</h1>
+        <p class="sub-info">
+            审核员ID：<span id="reviewerIdDisplay">---</span> | 
+            书籍ID：<span id="bookIdDisplay">---</span> | 
+            章节号：<span id="chapterNumDisplay">---</span>
+        </p>
+
+        <div class="card">
+            <div class="info-label">章节标题</div>
+            <div class="title-display" id="chapterTitle">加载中...</div>
+        </div>
+
+        <div class="card">
+            <div class="info-label">章节正文</div>
+            <div class="content-display" id="chapterContent">加载中...</div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-approve" id="approveBtn">✅ 通过</button>
+            <button class="btn btn-reject" id="rejectBtn">❌ 拒绝</button>
+        </div>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var urlParams = new URLSearchParams(window.location.search);
+        var userId = urlParams.get('userid') || '未提供';
+        var bookId = urlParams.get('book_id') || '未提供';
+        var chapterNum = urlParams.get('chapter_num') || '未提供';
+
+        document.getElementById('reviewerIdDisplay').textContent = userId;
+        document.getElementById('bookIdDisplay').textContent = bookId;
+        document.getElementById('chapterNumDisplay').textContent = chapterNum;
+
+        // 加载章节内容（复用 /readchapter 接口）
+        function loadChapterContent() {
+            if (!bookId || !chapterNum) {
+                document.getElementById('chapterContent').textContent = '参数缺失';
+                return;
+            }
+            fetch(baseUrl + '/readchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, chapter_id: chapterNum })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success === 1) {
+                    document.getElementById('chapterTitle').textContent = data.title || '未知标题';
+                    document.getElementById('chapterContent').textContent = data.content || '（无内容）';
+                } else {
+                    document.getElementById('chapterContent').textContent = '加载失败：' + (data.message || '');
+                }
+            })
+            .catch(() => {
+                document.getElementById('chapterContent').textContent = '网络错误';
+            });
+        }
+
+        // 审核操作
+        function reviewAction(action) {
+            fetch(baseUrl + '/review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userid: userId,
+                    book_id: bookId,
+                    chapter_num: chapterNum,
+                    action: action
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert('操作成功');
+                    // 跳转回审核列表，使用相对路径
+                    window.location.href = 'check.html?userid=' + userId;
+                } else {
+                    alert('操作失败：' + (data.message || ''));
+                }
+            })
+            .catch(() => alert('网络错误'));
+        }
+
+        document.getElementById('approveBtn').onclick = function() { reviewAction('approve'); };
+        document.getElementById('rejectBtn').onclick = function() { reviewAction('reject'); };
+
+        loadChapterContent();
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创作中心 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        #headtop a {
+            background: aqua;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            font-size: 15px;
+        }
+
+        #headtop a:hover {
+            background: #00cccc;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card h2 {
+            color: aqua;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .form-group.full-width {
+            flex: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: aqua;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .large-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            margin-top: 10px;
+            padding: 12px 30px;
+            background: aqua;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+        }
+
+        .user-id-display {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .user-id-display span {
+            color: aqua;
+            font-weight: bold;
+        }
+    </style>
+    <!-- 引入 mammoth.js 用于解析 docx 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+    <div id="headtop">
+        <a href="person.html">👤 个人页面</a>
+        <a href="menu.html">📚 返回书城</a>
+    </div>
+
+    <div class="container">
+
+        <div class="user-id-display">
+            当前用户ID：<span id="currentUserId">---</span>
+        </div>
+
+        <!-- 创建书籍 -->
+        <div class="card">
+            <h2>📖 创建书籍</h2>
+            <div class="form-group">
+                <label>书籍名称</label>
+                <input type="text" id="newBookTitle" placeholder="请输入新书名" style="padding: 16px; font-size: 18px;">
+            </div>
+            <div class="form-group">
+                <label>书籍简介</label>
+                <textarea id="newBookDesc" class="large-textarea" placeholder="一句话介绍（可选）"></textarea>
+            </div>
+            <button class="btn-submit" id="createBookBtn">创建书籍</button>
+        </div>
+
+        <!-- 修改简介 -->
+        <div class="card">
+            <h2>✏️ 修改简介</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书本ID</label>
+                    <input type="text" id="editDescBookId" placeholder="输入书本ID">
+                </div>
+                <div class="form-group">
+                    <label>书本名</label>
+                    <input type="text" id="editDescBookName" placeholder="输入书本名">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>新简介</label>
+                <textarea id="editDescContent" class="large-textarea" placeholder="请输入新的简介内容"></textarea>
+            </div>
+            <button class="btn-submit" id="editDescBtn">修改</button>
+        </div>
+
+        <!-- 上传章节 -->
+        <div class="card">
+            <h2>📝 上传章节</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书籍 ID</label>
+                    <input type="text" id="uploadBookId" placeholder="目标书籍ID">
+                </div>
+                <div class="form-group">
+                    <label>章节号（数字）</label>
+                    <input type="number" id="uploadChapterNum" placeholder="例如：3">
+                </div>
+                <div class="form-group">
+                    <label>章节标题</label>
+                    <input type="text" id="uploadChapterTitle" placeholder="请输入章节标题">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>选择章节文件</label>
+                    <input type="file" id="uploadFilePath">
+                </div>
+            </div>
+            <button class="btn-submit" id="uploadChapterBtn">上传章节</button>
+        </div>
+
+        <!-- 修改章节 -->
+        <div class="card">
+            <h2>✏️ 修改章节</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书籍 ID</label>
+                    <input type="text" id="editBookId" placeholder="书籍ID">
+                </div>
+                <div class="form-group">
+                    <label>书本名</label>
+                    <input type="text" id="editBookName" placeholder="书本名">
+                </div>
+                <div class="form-group">
+                    <label>章节号</label>
+                    <input type="number" id="editChapterNum" placeholder="章节号">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>章节正文</label>
+                <textarea id="editChapterContent" placeholder="在此编辑章节正文..." style="min-height: 200px; resize: vertical;"></textarea>
+            </div>
+            <button class="btn-submit" id="editChapterBtn">提交修改</button>
+        </div>
+
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+        document.getElementById('currentUserId').textContent = userId;
+
+        // 公共函数：将提取的文本发送到后端
+        function sendChapterData(content) {
+            var bookId = document.getElementById("uploadBookId").value.trim();
+            var chapterNum = document.getElementById("uploadChapterNum").value.trim();
+            var chapterTitle = document.getElementById("uploadChapterTitle").value.trim();
+
+            fetch(baseUrl + '/uploadchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: userId,
+                    book_id: bookId,
+                    chapter_num: chapterNum,
+                    title: chapterTitle,
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("上传成功！");
+                    document.getElementById("uploadBookId").value = "";
+                    document.getElementById("uploadChapterNum").value = "";
+                    document.getElementById("uploadChapterTitle").value = "";
+                    document.getElementById("uploadFilePath").value = "";
+                } else {
+                    alert("上传失败：" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        }
+
+        // ==================== 创建书籍 ====================
+        var createBookBtn = document.getElementById("createBookBtn");
+        createBookBtn.onclick = function() {
+            var newBookTitle = document.getElementById('newBookTitle').value;
+            var newBookDesc = document.getElementById("newBookDesc").value;
+            if (newBookTitle === "") {
+                alert("新书名不能为空");
+                return;
+            }
+            fetch(baseUrl + '/createbook', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "username": userId,
+                    "bname": newBookTitle,
+                    "desc": newBookDesc
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success == 1) {
+                    alert("创建成功你的新书id:" + data.bid);
+                } else {
+                    alert("创建失败" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+
+        // ==================== 修改简介 ====================
+        var editBtn = document.getElementById("editDescBtn");
+        editBtn.onclick = function() {
+            var editBookId = document.getElementById("editDescBookId").value;
+            var editBookName = document.getElementById("editDescBookName").value;
+            var editNewDescContent = document.getElementById("editDescContent").value;
+            if (editBookId === "" || editBookName === "") {
+                alert("书本ID和书名不能为空");
+                return;
+            }
+            fetch(baseUrl + "/updateEdit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "username": userId,
+                    "bid": editBookId,
+                    "bname": editBookName,
+                    "edit": editNewDescContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("修改成功");
+                    document.getElementById("editDescBookId").value = "";
+                    document.getElementById("editDescBookName").value = "";
+                    document.getElementById("editDescContent").value = "";
+                } else {
+                    alert("修改失败，原因：" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+
+        // ==================== 上传章节 ====================
+        var uploadChapterBtn = document.getElementById("uploadChapterBtn");
+        uploadChapterBtn.onclick = function() {
+            var bookId = document.getElementById("uploadBookId").value.trim();
+            var chapterNum = document.getElementById("uploadChapterNum").value.trim();
+            var chapterTitle = document.getElementById("uploadChapterTitle").value.trim();
+            var fileInput = document.getElementById("uploadFilePath");
+            var file = fileInput.files[0];
+
+            if (!bookId || !chapterNum || !chapterTitle || !file) {
+                alert("请填写所有字段并选择文件");
+                return;
+            }
+
+            var fileName = file.name.toLowerCase();
+
+            // 支持 .txt 和 .docx
+            if (!fileName.endsWith(".txt") && !fileName.endsWith(".docx")) {
+                alert("只支持上传 .txt 或 .docx 文件");
+                return;
+            }
+
+            // .txt 文件直接用 FileReader 读取
+            if (fileName.endsWith(".txt")) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    sendChapterData(e.target.result);
+                };
+                reader.readAsText(file, "UTF-8");
+            }
+
+            // .docx 文件用 mammoth.js 提取纯文本
+            if (fileName.endsWith(".docx")) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result })
+                        .then(function(result) {
+                            sendChapterData(result.value);
+                        })
+                        .catch(function(err) {
+                            alert("解析 Word 文件失败：" + err.message);
+                        });
+                };
+                reader.readAsArrayBuffer(file);   // docx 必须用 ArrayBuffer
+            }
+        };
+
+        // ==================== 修改章节 ====================
+        var editChapterBtn = document.getElementById("editChapterBtn");
+        editChapterBtn.onclick = function() {
+            var bookId = document.getElementById("editBookId").value.trim();
+            var bookName = document.getElementById("editBookName").value.trim();
+            var chapterNum = document.getElementById("editChapterNum").value.trim();
+            var newContent = document.getElementById("editChapterContent").value;
+
+            if (!bookId || !bookName || !chapterNum) {
+                alert("书籍ID、书名、章节号不能为空");
+                return;
+            }
+            if (!newContent) {
+                alert("章节正文不能为空");
+                return;
+            }
+
+            fetch(baseUrl + '/editchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: userId,
+                    book_id: bookId,
+                    chapter_num: chapterNum,
+                    title: "第" + chapterNum + "章",
+                    content: newContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("修改成功！");
+                    document.getElementById("editBookId").value = "";
+                    document.getElementById("editBookName").value = "";
+                    document.getElementById("editChapterNum").value = "";
+                    document.getElementById("editChapterContent").value = "";
+                } else {
+                    alert("修改失败：" + (data.message || "未知错误"));
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+    </script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .login-card h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .login-card p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .input-group input::placeholder {
+            color: #666;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 13px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            color: #000;
+        }
+
+        .btn-login {
+            background: aqua;
+            color: #000;
+        }
+
+        .btn-login:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-register {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-register:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: aqua;
+            color: aqua;
+            transform: translateY(-2px);
+        }
+
+        .login-footer {
+            margin-top: 25px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>📚 小说平台</h1>
+            <p>欢迎回来，请登录你的账号</p>
+
+            <div class="input-group">
+                <label>账号</label>
+                <input type="text" id="first" placeholder="请输入账号" required>
+            </div>
+
+            <div class="input-group">
+                <label>密码</label>
+                <input type="password" id="second" placeholder="请输入密码" required>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-login" id="log">登录</button>
+                <a href="zhuche.html" class="btn btn-register" id="z_c">注册</a>
+            </div>
+
+            <div class="login-footer">
+                © 2026 小说平台 · 阅读无限
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态获取基础URL，不再硬编码IP
+        var baseUrl = window.location.origin;
+
+        var log = document.getElementById("log");
+        var z_c = document.getElementById("z_c");
+        var first = document.getElementById("first");
+        var second = document.getElementById("second");
+
+        log.onclick = function clickfunc() {
+            var username = first.value;
+            var password = second.value;
+            if(username===""||username===""){
+                alert("不能为空");
+                return;
+            }
+            fetch(baseUrl + '/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    sessionStorage.setItem('userId', data.userId || username);
+                    window.location.href = baseUrl + '/menu.html';
+                } else {
+                    alert('登录失败：' + (data.message || '账号或密码错误'));
+                }
+            })
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书城</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            /* 背景图片改为相对路径，不再硬编码 IP */
+            background-image: url("img/groud.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        #headtop {
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+        }
+        #person {
+            cursor: pointer;
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            font-weight: bold;
+        }
+        #find_k {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #find {
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            cursor: pointer;
+        }
+        .book-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px auto;
+            max-width: 1000px;
+        }
+        .book-card {
+            width: 140px;
+            height: 200px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            text-align: center;
+        }
+        .book-cover {
+            width: 100%;
+            height: 120px;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        .book-title {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .book-author {
+            color: #555;
+            font-size: 12px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px;
+        }
+        .pagination button {
+            padding: 8px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background: aqua;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <div id="person">个人信息</div>
+        <div id="find_k">
+            <div id="find">搜索</div>
+            <input type="text" placeholder="请输入搜索的书本名">
+        </div>
+    </div>
+    <hr style="border: 4px solid #000;">
+
+    <div class="book-grid"></div>
+
+    <div class="pagination">
+        <button id="prevBtn" disabled>上一页</button>
+        <span id="pageInfo">第 1 页</span>
+        <button id="nextBtn">下一页</button>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            // 未登录跳转，使用 baseUrl 动态拼接
+            window.location.href = baseUrl + '/login.html';
+        }
+        document.getElementById('person').onclick = function() {
+            // 跳转到个人页面，使用相对路径
+            window.location.href = baseUrl + '/person.html';
+        };
+
+        var currentPage = 1;
+        var totalPages = 1;
+        var pageSize = 10;
+
+        var grid = document.querySelector('.book-grid');
+        var prevBtn = document.getElementById('prevBtn');
+        var nextBtn = document.getElementById('nextBtn');
+        var pageInfo = document.getElementById('pageInfo');
+
+        function loadBooks(page) {
+            // 请求书单，使用 baseUrl 动态拼接
+            fetch(baseUrl + '/booklist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page: page, size: pageSize })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success === 1) {
+                    renderBooks(data.books);
+                    var totalCount = data.totalPages || 0;
+                    totalPages = Math.ceil(totalCount / pageSize);
+                    updatePagination();
+                } else {
+                    alert('加载书籍失败');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('网络错误');
+            });
+        }
+
+        function renderBooks(books) {
+            grid.innerHTML = '';
+            books.forEach(function(book) {
+                var card = document.createElement('div');
+                card.className = 'book-card';
+
+                var cover = document.createElement('div');
+                cover.className = 'book-cover';
+                cover.textContent = '📚';
+
+                var title = document.createElement('div');
+                title.className = 'book-title';
+                title.textContent = book.bname || '未知书名';
+
+                var author = document.createElement('div');
+                author.className = 'book-author';
+                author.textContent = book.author || '佚名';
+
+                card.appendChild(cover);
+                card.appendChild(title);
+                card.appendChild(author);
+
+                // 点击书籍跳转到详情页，使用相对路径
+                card.onclick = function() {
+                    var bookId = book.id;
+                    var bookName = book.bname;
+                    sessionStorage.setItem('userId', userId);
+                    window.location.href = 'book.html?name=' 
+                        + encodeURIComponent(bookName) + '&id=' + bookId;
+                };
+
+                grid.appendChild(card);
+            });
+        }
+
+        function updatePagination() {
+            prevBtn.disabled = (currentPage <= 1);
+            nextBtn.disabled = (currentPage >= totalPages);
+            pageInfo.textContent = '第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页';
+        }
+
+        prevBtn.addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadBooks(currentPage);
+            }
+        });
+        nextBtn.addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadBooks(currentPage);
+            }
+        });
+
+        loadBooks(1);
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+        }
+
+        .profile-wrapper {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #fff;
+        }
+
+        .profile-card h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: aqua;
+            letter-spacing: 1px;
+        }
+
+        .form-section {
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 18px;
+        }
+
+        .radio-group label {
+            color: #ccc;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #ddd;
+            font-size: 15px;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: aqua;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: aqua;
+            color: #000;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: aqua;
+            color: aqua;
+            transform: translateY(-2px);
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ddd;
+        }
+
+        .btn-full:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .hidden-btn {
+            display: none;
+        }
+
+        .password-section {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .password-section input {
+            flex: 1;
+        }
+    </style>
+    <script src="findrole.js"></script>
+</head>
+<body>
+    
+    <div class="profile-wrapper">
+        <div class="profile-card">
+            <h1>👤 个人简介</h1>
+
+            <div class="form-section">
+                <!-- 姓名 -->
+                <div class="input-group">
+                    <label>姓名</label>
+                    <input type="text" id="name1" placeholder="请输入姓名">
+                </div>
+
+                <!-- 性别 -->
+                <div class="radio-group">
+                    <label>性别</label>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="man" value="男">
+                        <span>男</span>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="woman" value="女">
+                        <span>女</span>
+                    </div>
+                </div>
+
+                <!-- 个人简介 -->
+                <div class="input-group">
+                    <label>个人简介</label>
+                    <textarea id="intre" placeholder="介绍一下自己吧..."></textarea>
+                </div>
+            </div>
+
+            <!-- 修改 / 返回主页 -->
+            <div class="btn-row">
+                <button class="btn btn-primary" id="rname">修改信息</button>
+                <a href="menu.html" class="btn btn-secondary">返回主页</a>
+            </div>
+
+            <!-- 进入审核（根据角色显示/隐藏） -->
+            <button class="btn btn-full" id="manger" style="margin-top: 15px;">🔍 进入审核</button>
+
+            <!-- 修改密码 -->
+            <div class="password-section">
+                <input type="password" id="password" placeholder="新密码" style="flex:1;">
+                <button class="btn btn-primary" id="rpassword" style="flex:0 0 auto;">修改密码</button>
+            </div>
+
+            <!-- 开启创作 -->
+            <button class="btn btn-full" id="create" style="margin-top: 15px;">✍️ 开启你的创作</button>
+        </div>
+    </div>
+
+    <script>
+        
+        var baseUrl = window.location.origin;
+        // ========== 原有 JS 逻辑（仅将硬编码 URL 替换为 baseUrl） ==========
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+
+        let name_, sex_, intre_, role_;
+        let role = document.getElementById("manger");
+        let name1 = document.getElementById('name1');
+        let intre = document.getElementById('intre');
+        find();
+
+        function find() {
+            fetch(baseUrl + '/find', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'username': userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    name_ = data.name;
+                    sex_ = data.sex;
+                    intre_ = data.intre;
+                    name1.value = name_;
+                    if (data.sex === '男') {
+                        document.getElementById('man').checked = true;
+                    } else if (data.sex === '女') {
+                        document.getElementById('woman').checked = true;
+                    }
+                    intre.value = intre_;
+                    role_ = data.role;
+                    rolemanger();
+
+                    // 为审核按钮绑定跳转（携带 userId）
+                    role.onclick = function() {
+                        window.location.href = baseUrl + '/check.html?userid=' + userId;
+                    };
+                } else {
+                    alert("初始化失败，可以选择刷新，或者返回");
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        }
+
+        function rolemanger() {
+            if (role_ === "reader") {
+                role.style.display = 'none';
+            }
+        }
+
+        var rname = document.getElementById("rname");
+        rname.onclick = function() {
+            var name2 = name1.value;
+            if (name2 === "") {
+                alert("姓名不能为空");
+                return;
+            }
+            var sex1 = document.getElementsByName("sex");
+            var true_sex;
+            for (let i = 0; i < sex1.length; i++) {
+                if (sex1[i].checked) {
+                    true_sex = sex1[i].value;
+                    break;
+                }
+            }
+            if (true_sex === "") {
+                alert("性别不能为空");
+                return;
+            }
+            let new_tre = intre.value;
+            fetch(baseUrl + "/rname", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    'username': userId,
+                    'name': name2,
+                    'sex': true_sex,
+                    'intre': new_tre
+                })
+            })
+            .then(response => response.json())
+            .then(data1 => {
+                if (data1.success === 1) {
+                    location.reload();
+                } else {
+                    alert(data1.message);
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        };
+
+        var rpassword1 = document.getElementById("rpassword");
+        rpassword1.onclick = function() {
+            var newPwd = document.getElementById("password").value;
+            if (newPwd === "") {
+                alert("新密码不能为空");
+                return;
+            }
+            fetch(baseUrl + "/rpassword", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    'username': userId,
+                    'password': newPwd
+                })
+            })
+            .then(response => response.json())
+            .then(data2 => {
+                if (data2.success === 1) {
+                    alert("修改成功，下次登录时请记住你的密码");
+                } else {
+                    alert(data2.message);
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        };
+
+        var create = document.getElementById("create");
+        create.onclick = function() {
+            sessionStorage.setItem('userId', userId);
+            window.location.href = baseUrl + '/create.html';
+        };
+
+
+        
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阅读</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #1e1e2f;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+        }
+        .btn {
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        .meta { margin-bottom: 15px; color: #ddd; }
+        .content-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            min-height: 300px;
+        }
+        .chapter-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .chapter-nav button {
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid aqua;
+            color: aqua;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .chapter-nav button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .upload-section {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <span class="btn" id="backToBookCity">📚 返回书城</span>
+        <span>
+            <span class="btn" id="backToBookHome">📖 本书主页</span>
+            <a href="menu.html" class="btn" style="text-decoration:none;">返回首页</a>
+        </span>
+    </div>
+
+    <div class="container">
+        <h2 id="chapterTitle"></h2>
+        <div class="meta">
+            书籍：<span id="bookName"></span> | 章节：<span id="chapterNum"></span>
+        </div>
+
+        <!-- 顶部翻页 -->
+        <div class="chapter-nav">
+            <button id="prevTop" disabled>← 上一章</button>
+            <span id="indexTop"></span>
+            <button id="nextTop" disabled>下一章 →</button>
+        </div>
+
+        <div class="content-box" id="content">加载中...</div>
+
+        <!-- 底部翻页 -->
+        <div class="chapter-nav">
+            <button id="prevBottom" disabled>← 上一章</button>
+            <span id="indexBottom"></span>
+            <button id="nextBottom" disabled>下一章 →</button>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h3>✏️ 上传新章节</h3>
+            <input type="text" id="newTitle" placeholder="章节标题"><br><br>
+            <textarea id="newContent" rows="8" placeholder="章节内容..."></textarea><br>
+            <button id="uploadBtn" class="btn">提交上传</button>
+            <span id="uploadMsg"></span>
+        </div>
+
+        <button onclick="history.back()" class="btn" style="margin-top:20px;">← 返回上一页</button>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+        function getQueryParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        var chapterId = getQueryParam('chapter_id');
+        var bookId = getQueryParam('book_id');
+        var bookName = getQueryParam('book_name') || '未知';
+        var chapterTitle = getQueryParam('title') || '未知章节';
+
+        if (!chapterId || !bookId) {
+            document.getElementById('content').innerHTML = '<p style="color:red;">参数错误</p>';
+            throw new Error('Missing params');
+        }
+
+        document.getElementById('bookName').textContent = bookName;
+        document.getElementById('chapterTitle').textContent = chapterTitle;
+        document.title = chapterTitle + ' - 阅读';
+
+        document.getElementById('backToBookCity').onclick = () => window.location.href = baseUrl + '/menu.html';
+        document.getElementById('backToBookHome').onclick = () => window.location.href = baseUrl + '/book.html?name=' + encodeURIComponent(bookName) + '&id=' + bookId;
+
+        var chapters = [];
+        var currentIndex = -1;
+
+        // 获取章节列表
+        function fetchChapterList(cb) {
+            fetch(baseUrl + '/chapterlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.chapters) {
+                    chapters = data.chapters;
+                    currentIndex = chapters.findIndex(ch => String(ch.id) === String(chapterId));
+                }
+                cb();
+            })
+            .catch(() => cb());
+        }
+
+        function loadContent() {
+            document.getElementById('content').textContent = '加载中...';
+            fetch(baseUrl + '/readchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, chapter_id: chapterId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('content').textContent = data.success ? data.content : '加载失败';
+            })
+            .catch(() => document.getElementById('content').textContent = '网络错误');
+        }
+
+        function updateNav() {
+            var hasPrev = currentIndex > 0;
+            var hasNext = currentIndex < chapters.length - 1;
+            var indexText = (currentIndex >= 0) ? (currentIndex + 1) + ' / ' + chapters.length : '';
+
+            ['Top', 'Bottom'].forEach(suffix => {
+                document.getElementById('prev' + suffix).disabled = !hasPrev;
+                document.getElementById('next' + suffix).disabled = !hasNext;
+                document.getElementById('index' + suffix).textContent = indexText;
+            });
+
+            document.getElementById('prevTop').onclick = hasPrev ? goPrev : null;
+            document.getElementById('prevBottom').onclick = hasPrev ? goPrev : null;
+            document.getElementById('nextTop').onclick = hasNext ? goNext : null;
+            document.getElementById('nextBottom').onclick = hasNext ? goNext : null;
+        }
+
+        function goPrev() {
+            if (currentIndex > 0) switchChapter(chapters[currentIndex - 1]);
+        }
+        function goNext() {
+            if (currentIndex < chapters.length - 1) switchChapter(chapters[currentIndex + 1]);
+        }
+
+        function switchChapter(ch) {
+            chapterId = String(ch.id);
+            chapterTitle = '第' + ch.chapter_num + '章 ' + ch.title;
+            history.replaceState(null, '', '?chapter_id=' + chapterId + '&book_id=' + bookId + '&book_name=' + encodeURIComponent(bookName) + '&title=' + encodeURIComponent(chapterTitle));
+            document.getElementById('chapterTitle').textContent = chapterTitle;
+            document.title = chapterTitle + ' - 阅读';
+            currentIndex = chapters.findIndex(c => String(c.id) === chapterId);
+            loadContent();
+            updateNav();
+            window.scrollTo(0, 0);
+        }
+
+        // 初始化
+        fetchChapterList(() => {
+            loadContent();
+            updateNav();
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 小说平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+        }
+        .register-wrapper { width: 100%; max-width: 460px; }
+        .register-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        .register-card h1 { color: #fff; font-size: 28px; margin-bottom: 5px; letter-spacing: 1px; }
+        .register-card .subtitle { color: #aaa; font-size: 14px; margin-bottom: 25px; }
+        .form-section { text-align: left; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; color: #ccc; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff; font-size: 16px; outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+        .input-group input::placeholder { color: #666; }
+        .radio-group { display: flex; align-items: center; gap: 25px; margin-bottom: 18px; }
+        .radio-group label { color: #ccc; font-size: 13px; font-weight: 500; margin-right: 10px; }
+        .radio-option { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ddd; font-size: 15px; }
+        .radio-option input[type="radio"] { accent-color: aqua; width: 16px; height: 16px; cursor: pointer; }
+        .input-group textarea {
+            width: 100%; padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff; font-size: 16px; outline: none;
+            resize: vertical; min-height: 120px; font-family: inherit;
+        }
+        .input-group textarea:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+        .btn-row { display: flex; gap: 15px; margin-top: 25px; }
+        .btn {
+            flex: 1; padding: 13px 0; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            transition: all 0.3s ease; text-align: center;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-submit { background: aqua; color: #000; }
+        .btn-submit:hover { background: #00e6e6; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3); }
+        .btn-back { background: rgba(255, 255, 255, 0.15); color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); }
+        .btn-back:hover { background: rgba(255, 255, 255, 0.25); border-color: aqua; color: aqua; transform: translateY(-2px); }
+        .register-footer { margin-top: 20px; color: #888; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="register-wrapper">
+        <div class="register-card">
+            <h1>📝 创建账号</h1>
+            <p class="subtitle">注册成为小说平台的一员</p>
+            <div class="form-section">
+                <div class="input-group">
+                    <label>密码</label>
+                    <input type="password" id="mima1" placeholder="请输入密码" required>
+                </div>
+                <div class="input-group">
+                    <label>确认密码</label>
+                    <input type="password" id="mima2" placeholder="请再一次输入密码" required>
+                </div>
+                <div class="input-group">
+                    <label>姓名</label>
+                    <input type="text" id="name1" placeholder="请输入名称">
+                </div>
+                <div class="radio-group">
+                    <label>性别</label>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="man" value="男">
+                        <span>男</span>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="woman" value="女">
+                        <span>女</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>个人简介</label>
+                    <textarea id="jieshao" placeholder="介绍一下自己吧..."></textarea>
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-submit" id="sumbit">提交</button>
+                <!-- 返回按钮使用相对路径，无需硬编码IP -->
+                <a href="login.html" class="btn btn-back" id="backToLogin">返回</a>
+            </div>
+            <div class="register-footer">© 2026 小说平台 · 阅读无限</div>
+        </div>
+    </div>
+
+    <script>
+        // 动态获取基础URL，不再硬编码IP，也不加载外部配置文件
+        var baseUrl = window.location.origin;
+
+        // ========== 原有注册逻辑（仅将请求地址替换为baseUrl） ==========
+        var mima1 = document.getElementById("mima1");
+        var mima2 = document.getElementById("mima2");
+        var name1 = document.getElementById("name1");
+        var jieshao = document.getElementById("jieshao");
+        var bit = document.getElementById("sumbit");
+
+        bit.onclick = function() {
+            var password1 = mima1.value;
+            var password2 = mima2.value;
+            if (password1 === "" || password2 === "") { alert("密码不能为空"); return; }
+            if (password1 !== password2) { alert("密码不同，请重试"); return; }
+
+            var sex_ = "";
+            var sexNodes = document.getElementsByName("sex");
+            for (var i = 0; i < sexNodes.length; i++) {
+                if (sexNodes[i].checked) { sex_ = sexNodes[i].value; break; }
+            }
+            if (sex_ === "") { alert("请选择性别"); return; }
+
+            var name_ = name1.value;
+            if (name_ === "") { alert("姓名不能为空"); return; }
+
+            var jieshao_ = jieshao.value;
+
+            fetch(baseUrl + '/zhuche', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password1, sex: sex_, name: name_, jieshao: jieshao_ })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("注册成功，请记住你的账号：" + data.username);
+                } else {
+                    alert("注册失败：" + (data.message || "未知错误"));
+                }
+            })
+            .catch(err => { alert("网络或服务器错误"); console.error(err); });
+        };
+    </script>
+</body>
+</html>

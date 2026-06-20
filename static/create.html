@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创作中心 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            backdrop-filter: blur(6px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        #headtop a {
+            background: aqua;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            font-size: 15px;
+        }
+
+        #headtop a:hover {
+            background: #00cccc;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card h2 {
+            color: aqua;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .form-group.full-width {
+            flex: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: aqua;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .large-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            margin-top: 10px;
+            padding: 12px 30px;
+            background: aqua;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+        }
+
+        .user-id-display {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .user-id-display span {
+            color: aqua;
+            font-weight: bold;
+        }
+    </style>
+    <!-- 引入 mammoth.js 用于解析 docx 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+    <div id="headtop">
+        <a href="person.html">👤 个人页面</a>
+        <a href="menu.html">📚 返回书城</a>
+    </div>
+
+    <div class="container">
+
+        <div class="user-id-display">
+            当前用户ID：<span id="currentUserId">---</span>
+        </div>
+
+        <!-- 创建书籍 -->
+        <div class="card">
+            <h2>📖 创建书籍</h2>
+            <div class="form-group">
+                <label>书籍名称</label>
+                <input type="text" id="newBookTitle" placeholder="请输入新书名" style="padding: 16px; font-size: 18px;">
+            </div>
+            <div class="form-group">
+                <label>书籍简介</label>
+                <textarea id="newBookDesc" class="large-textarea" placeholder="一句话介绍（可选）"></textarea>
+            </div>
+            <button class="btn-submit" id="createBookBtn">创建书籍</button>
+        </div>
+
+        <!-- 修改简介 -->
+        <div class="card">
+            <h2>✏️ 修改简介</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书本ID</label>
+                    <input type="text" id="editDescBookId" placeholder="输入书本ID">
+                </div>
+                <div class="form-group">
+                    <label>书本名</label>
+                    <input type="text" id="editDescBookName" placeholder="输入书本名">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>新简介</label>
+                <textarea id="editDescContent" class="large-textarea" placeholder="请输入新的简介内容"></textarea>
+            </div>
+            <button class="btn-submit" id="editDescBtn">修改</button>
+        </div>
+
+        <!-- 上传章节 -->
+        <div class="card">
+            <h2>📝 上传章节</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书籍 ID</label>
+                    <input type="text" id="uploadBookId" placeholder="目标书籍ID">
+                </div>
+                <div class="form-group">
+                    <label>章节号（数字）</label>
+                    <input type="number" id="uploadChapterNum" placeholder="例如：3">
+                </div>
+                <div class="form-group">
+                    <label>章节标题</label>
+                    <input type="text" id="uploadChapterTitle" placeholder="请输入章节标题">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>选择章节文件</label>
+                    <input type="file" id="uploadFilePath">
+                </div>
+            </div>
+            <button class="btn-submit" id="uploadChapterBtn">上传章节</button>
+        </div>
+
+        <!-- 修改章节 -->
+        <div class="card">
+            <h2>✏️ 修改章节</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>书籍 ID</label>
+                    <input type="text" id="editBookId" placeholder="书籍ID">
+                </div>
+                <div class="form-group">
+                    <label>书本名</label>
+                    <input type="text" id="editBookName" placeholder="书本名">
+                </div>
+                <div class="form-group">
+                    <label>章节号</label>
+                    <input type="number" id="editChapterNum" placeholder="章节号">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>章节正文</label>
+                <textarea id="editChapterContent" placeholder="在此编辑章节正文..." style="min-height: 200px; resize: vertical;"></textarea>
+            </div>
+            <button class="btn-submit" id="editChapterBtn">提交修改</button>
+        </div>
+
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+        document.getElementById('currentUserId').textContent = userId;
+
+        // 公共函数：将提取的文本发送到后端
+        function sendChapterData(content) {
+            var bookId = document.getElementById("uploadBookId").value.trim();
+            var chapterNum = document.getElementById("uploadChapterNum").value.trim();
+            var chapterTitle = document.getElementById("uploadChapterTitle").value.trim();
+
+            fetch(baseUrl + '/uploadchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: userId,
+                    book_id: bookId,
+                    chapter_num: chapterNum,
+                    title: chapterTitle,
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("上传成功！");
+                    document.getElementById("uploadBookId").value = "";
+                    document.getElementById("uploadChapterNum").value = "";
+                    document.getElementById("uploadChapterTitle").value = "";
+                    document.getElementById("uploadFilePath").value = "";
+                } else {
+                    alert("上传失败：" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        }
+
+        // ==================== 创建书籍 ====================
+        var createBookBtn = document.getElementById("createBookBtn");
+        createBookBtn.onclick = function() {
+            var newBookTitle = document.getElementById('newBookTitle').value;
+            var newBookDesc = document.getElementById("newBookDesc").value;
+            if (newBookTitle === "") {
+                alert("新书名不能为空");
+                return;
+            }
+            fetch(baseUrl + '/createbook', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "username": userId,
+                    "bname": newBookTitle,
+                    "desc": newBookDesc
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success == 1) {
+                    alert("创建成功你的新书id:" + data.bid);
+                } else {
+                    alert("创建失败" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+
+        // ==================== 修改简介 ====================
+        var editBtn = document.getElementById("editDescBtn");
+        editBtn.onclick = function() {
+            var editBookId = document.getElementById("editDescBookId").value;
+            var editBookName = document.getElementById("editDescBookName").value;
+            var editNewDescContent = document.getElementById("editDescContent").value;
+            if (editBookId === "" || editBookName === "") {
+                alert("书本ID和书名不能为空");
+                return;
+            }
+            fetch(baseUrl + "/updateEdit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "username": userId,
+                    "bid": editBookId,
+                    "bname": editBookName,
+                    "edit": editNewDescContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("修改成功");
+                    document.getElementById("editDescBookId").value = "";
+                    document.getElementById("editDescBookName").value = "";
+                    document.getElementById("editDescContent").value = "";
+                } else {
+                    alert("修改失败，原因：" + data.message);
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+
+        // ==================== 上传章节 ====================
+        var uploadChapterBtn = document.getElementById("uploadChapterBtn");
+        uploadChapterBtn.onclick = function() {
+            var bookId = document.getElementById("uploadBookId").value.trim();
+            var chapterNum = document.getElementById("uploadChapterNum").value.trim();
+            var chapterTitle = document.getElementById("uploadChapterTitle").value.trim();
+            var fileInput = document.getElementById("uploadFilePath");
+            var file = fileInput.files[0];
+
+            if (!bookId || !chapterNum || !chapterTitle || !file) {
+                alert("请填写所有字段并选择文件");
+                return;
+            }
+
+            var fileName = file.name.toLowerCase();
+
+            // 支持 .txt 和 .docx
+            if (!fileName.endsWith(".txt") && !fileName.endsWith(".docx")) {
+                alert("只支持上传 .txt 或 .docx 文件");
+                return;
+            }
+
+            // .txt 文件直接用 FileReader 读取
+            if (fileName.endsWith(".txt")) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    sendChapterData(e.target.result);
+                };
+                reader.readAsText(file, "UTF-8");
+            }
+
+            // .docx 文件用 mammoth.js 提取纯文本
+            if (fileName.endsWith(".docx")) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result })
+                        .then(function(result) {
+                            sendChapterData(result.value);
+                        })
+                        .catch(function(err) {
+                            alert("解析 Word 文件失败：" + err.message);
+                        });
+                };
+                reader.readAsArrayBuffer(file);   // docx 必须用 ArrayBuffer
+            }
+        };
+
+        // ==================== 修改章节 ====================
+        var editChapterBtn = document.getElementById("editChapterBtn");
+        editChapterBtn.onclick = function() {
+            var bookId = document.getElementById("editBookId").value.trim();
+            var bookName = document.getElementById("editBookName").value.trim();
+            var chapterNum = document.getElementById("editChapterNum").value.trim();
+            var newContent = document.getElementById("editChapterContent").value;
+
+            if (!bookId || !bookName || !chapterNum) {
+                alert("书籍ID、书名、章节号不能为空");
+                return;
+            }
+            if (!newContent) {
+                alert("章节正文不能为空");
+                return;
+            }
+
+            fetch(baseUrl + '/editchapter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: userId,
+                    book_id: bookId,
+                    chapter_num: chapterNum,
+                    title: "第" + chapterNum + "章",
+                    content: newContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    alert("修改成功！");
+                    document.getElementById("editBookId").value = "";
+                    document.getElementById("editBookName").value = "";
+                    document.getElementById("editChapterNum").value = "";
+                    document.getElementById("editChapterContent").value = "";
+                } else {
+                    alert("修改失败：" + (data.message || "未知错误"));
+                }
+            })
+            .catch(err => alert("网络错误"));
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+/home/sang/桌面/http/build/CMakeFiles/httpserver.dir
+/home/sang/桌面/http/build/CMakeFiles/edit_cache.dir
+/home/sang/桌面/http/build/CMakeFiles/rebuild_cache.dir

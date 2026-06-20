@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书籍详情</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-image: url("img/groud.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #headtop {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+        }
+        #headtop .left {
+            cursor: pointer;
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            font-weight: bold;
+        }
+        #headtop .right a {
+            background: aqua;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .book-hero {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            max-width: 600px;
+        }
+        .book-cover-large {
+            width: 120px;
+            height: 160px;
+            background: #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            flex-shrink: 0;
+        }
+        .book-info {
+            flex: 1;
+        }
+        .book-info h1 {
+            margin: 0 0 5px 0;
+            color: black;
+        }
+        .book-info .author {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .book-info .desc {
+            color: #222;
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 1;
+        }
+        .chapter-section {
+            width: 90%;
+            max-width: 700px;
+            margin: 20px 0;
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .chapter-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chapter-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .chapter-item:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .loading { text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <div class="left" id="backToBookCity">📚 返回书城</div>
+        <div class="right">
+            <!-- 返回首页也使用相对路径 -->
+            <a href="menu.html">返回首页</a>
+        </div>
+    </div>
+
+    <div class="book-hero">
+        <div class="book-cover-large">📖</div>
+        <div class="book-info">
+            <h1 id="bookTitle">加载中...</h1>
+            <div class="author" id="bookAuthor">作者：--</div>
+            <div class="desc" id="bookDesc">简介：--</div>
+        </div>
+    </div>
+
+    <div class="chapter-section">
+        <h2 style="text-align:center;">📜 章节列表</h2>
+        <div class="chapter-list" id="chapterList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 动态获取当前访问根路径，不再写死 IP
+        var baseUrl = window.location.origin;
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = 'login.html';
+        }
+
+        function getQueryParam(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        var bookId = getQueryParam('id');
+        var bookName = getQueryParam('name') || '未知书籍';
+
+        if (!bookId) {
+            alert('书籍ID无效');
+            window.location.href = 'menu.html';
+        }
+
+        document.getElementById('backToBookCity').onclick = function() {
+            window.location.href = 'menu.html';
+        };
+
+        // 加载书籍基本信息（使用 baseUrl 动态拼接请求地址）
+        function loadBookInfo() {
+            fetch(baseUrl + '/bookinfo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                var info = (data && data.book) ? data.book : {};
+                document.getElementById('bookTitle').textContent = info.bname || bookName || '未知书籍';
+                document.getElementById('bookAuthor').textContent = '作者：' + (info.author || '佚名');
+                document.getElementById('bookDesc').textContent = info.description || '暂无简介';
+            })
+            .catch(() => {
+                document.getElementById('bookTitle').textContent = bookName || '未知书籍';
+                document.getElementById('bookAuthor').textContent = '作者：佚名';
+                document.getElementById('bookDesc').textContent = '暂无简介';
+            });
+        }
+
+        function loadChapters() {
+            fetch(baseUrl + '/chapterlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                var container = document.getElementById('chapterList');
+                container.innerHTML = '';
+                if (data.success === 1 && data.chapters && data.chapters.length > 0) {
+                    data.chapters.forEach(function(ch) {
+                        var item = document.createElement('div');
+                        item.className = 'chapter-item';
+                        item.innerHTML = '<span>第' + ch.chapter_num + '章 ' + ch.title + '</span><span style="color:lightgreen;">免费</span>';
+                        item.onclick = function() {
+                            sessionStorage.setItem('userId', userId);
+                            // 使用相对路径跳转到阅读页，携带完整参数
+                            window.location.href = 'read.html?chapter_id=' + ch.id 
+                                + '&book_id=' + bookId 
+                                + '&book_name=' + encodeURIComponent(bookName) 
+                                + '&title=' + encodeURIComponent(ch.title);
+                        };
+                        container.appendChild(item);
+                    });
+                } else {
+                    container.innerHTML = '<div class="loading">暂无章节</div>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('chapterList').innerHTML = '<div class="loading">加载失败</div>';
+            });
+        }
+
+        // 初始化
+        loadBookInfo();
+        loadChapters();
+    </script>
+</body>
+</html>

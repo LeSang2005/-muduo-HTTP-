@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核列表 - 小说平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        #headtop { width: 100%; height: 50px; background: rgba(0,0,0,0.65); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; box-sizing: border-box; backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 10; }
+        #headtop a { background: aqua; padding: 8px 20px; border-radius: 20px; color: #000; text-decoration: none; font-weight: bold; transition: background 0.2s; font-size: 15px; }
+        #headtop a:hover { background: #00cccc; }
+        .container { width: 90%; max-width: 900px; margin: 30px 0; }
+        h1 { text-align: center; color: aqua; font-size: 28px; margin-bottom: 10px; }
+        .user-info { text-align: center; color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .user-info span { color: aqua; font-weight: bold; }
+        .review-card { background: rgba(255,255,255,0.08); backdrop-filter: blur(15px); border-radius: 20px; padding: 20px 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+        .table-header { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: bold; color: aqua; font-size: 15px; }
+        .table-row { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; transition: background 0.2s; cursor: pointer; }
+        .table-row:last-child { border-bottom: none; }
+        .table-row:hover { background: rgba(255,255,255,0.05); }
+        .book-title { font-size: 15px; font-weight: 500; }
+        .chapter-num { color: #ccc; font-size: 14px; }
+        .status-badge { font-size: 13px; background: rgba(255,170,0,0.2); color: #ffaa00; padding: 4px 12px; border-radius: 20px; display: inline-block; width: fit-content; }
+    </style>
+</head>
+<body>
+    <div id="headtop">
+        <a href="person.html">👤 个人页面</a>
+        <a href="menu.html">📚 返回书城</a>
+    </div>
+
+    <div class="container">
+        <h1>🔍 章节审核</h1>
+        <div class="user-info">审核员ID：<span id="reviewerIdDisplay">（从URL获取）</span></div>
+        <div class="review-card">
+            <div class="table-header">
+                <div>书籍 / 章节标题</div>
+                <div>章节号</div>
+                <div>状态</div>
+            </div>
+            <div id="reviewList"></div>
+        </div>
+    </div>
+
+    <script>
+        var baseUrl = window.location.origin;
+        var urlParams = new URLSearchParams(window.location.search);
+        var userId = urlParams.get('userid') || sessionStorage.getItem('userId');
+        document.getElementById('reviewerIdDisplay').textContent = userId || '未提供';
+
+        function loadReviewList() {
+            var container = document.getElementById('reviewList');
+            container.innerHTML = '<div style="text-align:center;padding:30px;">加载中...</div>';
+            fetch(baseUrl + '/reviewlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userid: userId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
+                if (data.success === 1 && data.chapters && data.chapters.length > 0) {
+                    data.chapters.forEach(function(ch) {
+                        var row = document.createElement('div');
+                        row.className = 'table-row';
+                        row.innerHTML = `
+                            <div class="book-title">${ch.book_name} · ${ch.title}</div>
+                            <div class="chapter-num">第${ch.chapter_num}章</div>
+                            <div><span class="status-badge">待审核</span></div>
+                        `;
+                        row.onclick = function() {
+                            // 跳转到审核详情页，使用相对路径
+                            window.location.href = 'checkbook.html?'
+                                + 'userid=' + userId
+                                + '&book_id=' + ch.book_id
+                                + '&chapter_num=' + ch.chapter_num;
+                        };
+                        container.appendChild(row);
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">暂无待审核章节</div>';
+                }
+            })
+            .catch(err => {
+                container.innerHTML = '<div style="text-align:center;padding:30px;color:#ff6b6b;">加载失败，请稍后重试</div>';
+                console.error(err);
+            });
+        }
+
+        loadReviewList();
+    </script>
+</body>
+</html>

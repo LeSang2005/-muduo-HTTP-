@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+        }
+
+        .profile-wrapper {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #fff;
+        }
+
+        .profile-card h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: aqua;
+            letter-spacing: 1px;
+        }
+
+        .form-section {
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 18px;
+        }
+
+        .radio-group label {
+            color: #ccc;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #ddd;
+            font-size: 15px;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: aqua;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: aqua;
+            color: #000;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: aqua;
+            color: aqua;
+            transform: translateY(-2px);
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ddd;
+        }
+
+        .btn-full:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .hidden-btn {
+            display: none;
+        }
+
+        .password-section {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .password-section input {
+            flex: 1;
+        }
+    </style>
+    <script src="findrole.js"></script>
+</head>
+<body>
+    
+    <div class="profile-wrapper">
+        <div class="profile-card">
+            <h1>👤 个人简介</h1>
+
+            <div class="form-section">
+                <!-- 姓名 -->
+                <div class="input-group">
+                    <label>姓名</label>
+                    <input type="text" id="name1" placeholder="请输入姓名">
+                </div>
+
+                <!-- 性别 -->
+                <div class="radio-group">
+                    <label>性别</label>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="man" value="男">
+                        <span>男</span>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" name="sex" id="woman" value="女">
+                        <span>女</span>
+                    </div>
+                </div>
+
+                <!-- 个人简介 -->
+                <div class="input-group">
+                    <label>个人简介</label>
+                    <textarea id="intre" placeholder="介绍一下自己吧..."></textarea>
+                </div>
+            </div>
+
+            <!-- 修改 / 返回主页 -->
+            <div class="btn-row">
+                <button class="btn btn-primary" id="rname">修改信息</button>
+                <a href="menu.html" class="btn btn-secondary">返回主页</a>
+            </div>
+
+            <!-- 进入审核（根据角色显示/隐藏） -->
+            <button class="btn btn-full" id="manger" style="margin-top: 15px;">🔍 进入审核</button>
+
+            <!-- 修改密码 -->
+            <div class="password-section">
+                <input type="password" id="password" placeholder="新密码" style="flex:1;">
+                <button class="btn btn-primary" id="rpassword" style="flex:0 0 auto;">修改密码</button>
+            </div>
+
+            <!-- 开启创作 -->
+            <button class="btn btn-full" id="create" style="margin-top: 15px;">✍️ 开启你的创作</button>
+        </div>
+    </div>
+
+    <script>
+        
+        var baseUrl = window.location.origin;
+        // ========== 原有 JS 逻辑（仅将硬编码 URL 替换为 baseUrl） ==========
+        var userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = baseUrl + '/login.html';
+        }
+
+        let name_, sex_, intre_, role_;
+        let role = document.getElementById("manger");
+        let name1 = document.getElementById('name1');
+        let intre = document.getElementById('intre');
+        find();
+
+        function find() {
+            fetch(baseUrl + '/find', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'username': userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    name_ = data.name;
+                    sex_ = data.sex;
+                    intre_ = data.intre;
+                    name1.value = name_;
+                    if (data.sex === '男') {
+                        document.getElementById('man').checked = true;
+                    } else if (data.sex === '女') {
+                        document.getElementById('woman').checked = true;
+                    }
+                    intre.value = intre_;
+                    role_ = data.role;
+                    rolemanger();
+
+                    // 为审核按钮绑定跳转（携带 userId）
+                    role.onclick = function() {
+                        window.location.href = baseUrl + '/check.html?userid=' + userId;
+                    };
+                } else {
+                    alert("初始化失败，可以选择刷新，或者返回");
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        }
+
+        function rolemanger() {
+            if (role_ === "reader") {
+                role.style.display = 'none';
+            }
+        }
+
+        var rname = document.getElementById("rname");
+        rname.onclick = function() {
+            var name2 = name1.value;
+            if (name2 === "") {
+                alert("姓名不能为空");
+                return;
+            }
+            var sex1 = document.getElementsByName("sex");
+            var true_sex;
+            for (let i = 0; i < sex1.length; i++) {
+                if (sex1[i].checked) {
+                    true_sex = sex1[i].value;
+                    break;
+                }
+            }
+            if (true_sex === "") {
+                alert("性别不能为空");
+                return;
+            }
+            let new_tre = intre.value;
+            fetch(baseUrl + "/rname", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    'username': userId,
+                    'name': name2,
+                    'sex': true_sex,
+                    'intre': new_tre
+                })
+            })
+            .then(response => response.json())
+            .then(data1 => {
+                if (data1.success === 1) {
+                    location.reload();
+                } else {
+                    alert(data1.message);
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        };
+
+        var rpassword1 = document.getElementById("rpassword");
+        rpassword1.onclick = function() {
+            var newPwd = document.getElementById("password").value;
+            if (newPwd === "") {
+                alert("新密码不能为空");
+                return;
+            }
+            fetch(baseUrl + "/rpassword", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    'username': userId,
+                    'password': newPwd
+                })
+            })
+            .then(response => response.json())
+            .then(data2 => {
+                if (data2.success === 1) {
+                    alert("修改成功，下次登录时请记住你的密码");
+                } else {
+                    alert(data2.message);
+                }
+            })
+            .catch(err => {
+                alert("网络或服务器错误");
+                console.error(err);
+            });
+        };
+
+        var create = document.getElementById("create");
+        create.onclick = function() {
+            sessionStorage.setItem('userId', userId);
+            window.location.href = baseUrl + '/create.html';
+        };
+
+
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 小说平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .login-card h1 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .login-card p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: aqua;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+        }
+
+        .input-group input::placeholder {
+            color: #666;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 13px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            color: #000;
+        }
+
+        .btn-login {
+            background: aqua;
+            color: #000;
+        }
+
+        .btn-login:hover {
+            background: #00e6e6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-register {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-register:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: aqua;
+            color: aqua;
+            transform: translateY(-2px);
+        }
+
+        .login-footer {
+            margin-top: 25px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>📚 小说平台</h1>
+            <p>欢迎回来，请登录你的账号</p>
+
+            <div class="input-group">
+                <label>账号</label>
+                <input type="text" id="first" placeholder="请输入账号" required>
+            </div>
+
+            <div class="input-group">
+                <label>密码</label>
+                <input type="password" id="second" placeholder="请输入密码" required>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-login" id="log">登录</button>
+                <a href="zhuche.html" class="btn btn-register" id="z_c">注册</a>
+            </div>
+
+            <div class="login-footer">
+                © 2026 小说平台 · 阅读无限
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态获取基础URL，不再硬编码IP
+        var baseUrl = window.location.origin;
+
+        var log = document.getElementById("log");
+        var z_c = document.getElementById("z_c");
+        var first = document.getElementById("first");
+        var second = document.getElementById("second");
+
+        log.onclick = function clickfunc() {
+            var username = first.value;
+            var password = second.value;
+            if(username===""||username===""){
+                alert("不能为空");
+                return;
+            }
+            fetch(baseUrl + '/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 1) {
+                    sessionStorage.setItem('userId', data.userId || username);
+                    window.location.href = baseUrl + '/menu.html';
+                } else {
+                    alert('登录失败：' + (data.message || '账号或密码错误'));
+                }
+            })
+        }
+    </script>
+</body>
+</html>
