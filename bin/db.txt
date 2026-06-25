@@ -1,5 +1,5 @@
 host=localhost
 user=root
-password=123457
+password=123456
 database=readbook
 port=3306

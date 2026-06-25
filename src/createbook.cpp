@@ -4,7 +4,7 @@ createbook::createbook(){
     setmethodname("createbook");
 }
 
-std::string createbook::send(){
+std::string createbook::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);
@@ -34,9 +34,14 @@ std::string createbook::send(){
     MYSQL_ROW row=mysql_fetch_row(res.get());
     std::string name=row[0];
     std::string bookname=js["bname"];
+
+    int n=bookname.find_first_not_of(" ");
+    bookname=bookname.substr(n);
+    n=bookname.find_last_not_of(" ");
+    bookname=bookname.substr(0,n+1);
     std::string desc=js["desc"];
     word="select bname from book where bname=";
-    word=word+"'"+mysql->escape(bookname)+"' and id="+mysql->escape(userid)+";";
+    word=word+"'"+mysql->escape(bookname)+"' "+";";
     std::cout<<word<<std::endl;
     res=mysql->find(word);
     row=mysql_fetch_row(res.get());

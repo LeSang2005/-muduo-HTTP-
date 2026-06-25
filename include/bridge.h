@@ -9,12 +9,12 @@
 class bridge {
 public:
     using json = nlohmann::json;
-    void setmessage(std::string message) { message_ = message; }
+    //void setmessage(std::string message) { message_ = message; }
     void setmethodname(std::string name) { methodName = name; }
     bool ismethod(std::string name) { return name == methodName; }
     bool isMethodEmpty() { return methodName.empty(); }
     std::string outMethName() { return methodName; }
-    virtual std::string send() { return ""; }
+    virtual std::string send(std::string message_) { return ""; }
 
     // 设置连接指针（在 handlequeue 中调用）
     void setConnection(const muduo::net::TcpConnectionPtr& conn) {
@@ -31,7 +31,7 @@ public:
     }
 
 protected:
-    std::string message_;
+    //std::string message_;
     std::string methodName;
     muduo::net::TcpConnectionPtr ptr_;
 };

@@ -4,7 +4,7 @@
 zhuche::zhuche(){
     setmethodname("zhuche");
 }
-std::string zhuche::send(){
+std::string zhuche::send(std::string message_){
     std::string ip = getClientIP();  
     if (!RateLimiter::instance().allow(ip, 3, 120)) {  
         return R"({"success":0,"message":"注册太频繁，请稍后再试"})";

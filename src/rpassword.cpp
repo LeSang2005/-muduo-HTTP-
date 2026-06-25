@@ -3,7 +3,7 @@
 rpassword::rpassword(){
     setmethodname("rpassword");
 }
-std::string rpassword::send(){
+std::string rpassword::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);

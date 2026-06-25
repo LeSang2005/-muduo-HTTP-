@@ -6,5 +6,5 @@
 class createchapter :public bridge{
 public:
 createchapter();
-std::string send();
+std::string send(std::string message_);
 };

@@ -65,8 +65,8 @@
             backdrop-filter: blur(15px);
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .card h2 {
@@ -74,7 +74,7 @@
             font-size: 20px;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .form-row {
@@ -169,6 +169,14 @@
             transform: translateY(-2px);
         }
 
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: #008080;
+            color: #ccc;
+        }
+
         .user-id-display {
             text-align: center;
             margin-bottom: 10px;
@@ -180,9 +188,82 @@
             color: aqua;
             font-weight: bold;
         }
+
+        /* 书籍列表样式（新增） */
+        .book-list-wrap {
+            margin-top: 15px;
+            min-height: 40px;
+        }
+
+        .book-item {
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            transition: all 0.2s;
+        }
+
+        .book-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 255, 255, 0.25);
+        }
+
+        .book-item-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: aqua;
+            margin-bottom: 4px;
+        }
+
+        .book-item-desc {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .empty-book {
+            text-align: center;
+            padding: 30px 0;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        .empty-book .icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .loading-text {
+            text-align: center;
+            padding: 20px 0;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: aqua;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
     <!-- 引入 mammoth.js 用于解析 docx 文件 -->
-    <script src="https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js">
+    </script>
 </head>
 <body>
 
@@ -195,6 +276,19 @@
 
         <div class="user-id-display">
             当前用户ID：<span id="currentUserId">---</span>
+        </div>
+
+        <!-- ==================== 我的全部书籍（新增模块） ==================== -->
+        <div class="card">
+            <h2>📚 我的全部书籍</h2>
+            <button class="btn-submit" id="refreshBooksBtn" onclick="getMyBook()">
+                🔄 刷新我的书籍
+            </button>
+            <div class="book-list-wrap" id="bookListWrap">
+                <div class="loading-text">
+                    <span class="spinner"></span> 正在加载书籍列表...
+                </div>
+            </div>
         </div>
 
         <!-- 创建书籍 -->
@@ -291,6 +385,57 @@
         }
         document.getElementById('currentUserId').textContent = userId;
 
+        // 书籍列表加载状态
+        var isBookLoading = false;
+
+        // ==================== 获取我的全部书籍（新增） ====================
+        function getMyBook() {
+            if (isBookLoading) return;
+            isBookLoading = true;
+            var btn = document.getElementById('refreshBooksBtn');
+            var wrap = document.getElementById('bookListWrap');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> 加载中...';
+            wrap.innerHTML = '<div class="loading-text"><span class="spinner"></span> 正在加载书籍列表...</div>';
+
+            fetch(baseUrl + '/mybook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userId })
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success === 1 && data.books && data.books.length > 0) {
+                        var html = '';
+                        data.books.forEach(function(book) {
+                            html +=
+                                '<div class="book-item">' +
+                                '<div class="book-item-title">📖 书籍ID：' + book.bid + ' | 书名：' + book.bname +
+                                '</div>' +
+                                '<div class="book-item-desc">简介：' + (book.desc || '暂无简介') + '</div>' +
+                                '</div>';
+                        });
+                        wrap.innerHTML = html;
+                    } else {
+                        wrap.innerHTML =
+                            '<div class="empty-book"><span class="icon">📭</span>暂无创建的书籍<br>前往下方创建新书</div>';
+                    }
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    wrap.innerHTML =
+                        '<div class="empty-book"><span class="icon">⚠️</span>加载失败，请检查网络后重试</div>';
+                })
+                .finally(function() {
+                    isBookLoading = false;
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 刷新我的书籍';
+                });
+        }
+
+        // 页面加载时自动获取书籍列表
+        getMyBook();
+
         // 公共函数：将提取的文本发送到后端
         function sendChapterData(content) {
             var bookId = document.getElementById("uploadBookId").value.trim();
@@ -298,29 +443,29 @@
             var chapterTitle = document.getElementById("uploadChapterTitle").value.trim();
 
             fetch(baseUrl + '/uploadchapter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: userId,
-                    book_id: bookId,
-                    chapter_num: chapterNum,
-                    title: chapterTitle,
-                    content: content
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: userId,
+                        book_id: bookId,
+                        chapter_num: chapterNum,
+                        title: chapterTitle,
+                        content: content
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success === 1) {
-                    alert("上传成功！");
-                    document.getElementById("uploadBookId").value = "";
-                    document.getElementById("uploadChapterNum").value = "";
-                    document.getElementById("uploadChapterTitle").value = "";
-                    document.getElementById("uploadFilePath").value = "";
-                } else {
-                    alert("上传失败：" + data.message);
-                }
-            })
-            .catch(err => alert("网络错误"));
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success === 1) {
+                        alert("上传成功！");
+                        document.getElementById("uploadBookId").value = "";
+                        document.getElementById("uploadChapterNum").value = "";
+                        document.getElementById("uploadChapterTitle").value = "";
+                        document.getElementById("uploadFilePath").value = "";
+                    } else {
+                        alert("上传失败：" + data.message);
+                    }
+                })
+                .catch(function(err) { alert("网络错误"); });
         }
 
         // ==================== 创建书籍 ====================
@@ -332,24 +477,35 @@
                 alert("新书名不能为空");
                 return;
             }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = "创建中...";
             fetch(baseUrl + '/createbook', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "username": userId,
-                    "bname": newBookTitle,
-                    "desc": newBookDesc
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "username": userId,
+                        "bname": newBookTitle,
+                        "desc": newBookDesc
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success == 1) {
-                    alert("创建成功你的新书id:" + data.bid);
-                } else {
-                    alert("创建失败" + data.message);
-                }
-            })
-            .catch(err => alert("网络错误"));
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success == 1) {
+                        alert("创建成功，你的新书id:" + data.bid);
+                        document.getElementById('newBookTitle').value = "";
+                        document.getElementById('newBookDesc').value = "";
+                        // 创建成功后自动刷新书籍列表
+                        getMyBook();
+                    } else {
+                        alert("创建失败：" + data.message);
+                    }
+                })
+                .catch(function(err) { alert("网络错误"); })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.textContent = "创建书籍";
+                });
         };
 
         // ==================== 修改简介 ====================
@@ -362,31 +518,40 @@
                 alert("书本ID和书名不能为空");
                 return;
             }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = "修改中...";
             fetch(baseUrl + "/updateEdit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "username": userId,
-                    "bid": editBookId,
-                    "bname": editBookName,
-                    "edit": editNewDescContent
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "username": userId,
+                        "bid": editBookId,
+                        "bname": editBookName,
+                        "edit": editNewDescContent
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success === 1) {
-                    alert("修改成功");
-                    document.getElementById("editDescBookId").value = "";
-                    document.getElementById("editDescBookName").value = "";
-                    document.getElementById("editDescContent").value = "";
-                } else {
-                    alert("修改失败，原因：" + data.message);
-                }
-            })
-            .catch(err => alert("网络错误"));
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success === 1) {
+                        alert("修改成功");
+                        document.getElementById("editDescBookId").value = "";
+                        document.getElementById("editDescBookName").value = "";
+                        document.getElementById("editDescContent").value = "";
+                        // 修改简介成功后自动刷新书籍列表
+                        getMyBook();
+                    } else {
+                        alert("修改失败，原因：" + data.message);
+                    }
+                })
+                .catch(function(err) { alert("网络错误"); })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.textContent = "修改";
+                });
         };
 
-        // ==================== 上传章节 ====================
+        // ==================== 上传章节（优化异步流程） ====================
         var uploadChapterBtn = document.getElementById("uploadChapterBtn");
         uploadChapterBtn.onclick = function() {
             var bookId = document.getElementById("uploadBookId").value.trim();
@@ -408,29 +573,48 @@
                 return;
             }
 
-            // .txt 文件直接用 FileReader 读取
-            if (fileName.endsWith(".txt")) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    sendChapterData(e.target.result);
-                };
-                reader.readAsText(file, "UTF-8");
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = "上传中...";
+
+            // 封装文件读取为 Promise，避免异步顺序问题
+            function readFileContent(file) {
+                return new Promise(function(resolve, reject) {
+                    var reader = new FileReader();
+                    reader.onerror = function() { reject(new Error("文件读取失败")); };
+                    reader.onload = function(e) {
+                        try {
+                            if (fileName.endsWith(".txt")) {
+                                resolve(e.target.result);
+                            } else if (fileName.endsWith(".docx")) {
+                                mammoth.extractRawText({ arrayBuffer: e.target.result })
+                                    .then(function(result) { resolve(result.value); })
+                                    .catch(function(err) { reject(new Error("解析 Word 文件失败：" + err
+                                            .message)); });
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    if (fileName.endsWith(".txt")) {
+                        reader.readAsText(file, "UTF-8");
+                    } else {
+                        reader.readAsArrayBuffer(file);
+                    }
+                });
             }
 
-            // .docx 文件用 mammoth.js 提取纯文本
-            if (fileName.endsWith(".docx")) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    mammoth.extractRawText({ arrayBuffer: e.target.result })
-                        .then(function(result) {
-                            sendChapterData(result.value);
-                        })
-                        .catch(function(err) {
-                            alert("解析 Word 文件失败：" + err.message);
-                        });
-                };
-                reader.readAsArrayBuffer(file);   // docx 必须用 ArrayBuffer
-            }
+            readFileContent(file)
+                .then(function(content) {
+                    sendChapterData(content);
+                })
+                .catch(function(err) {
+                    alert(err.message || "文件处理失败");
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.textContent = "上传章节";
+                });
         };
 
         // ==================== 修改章节 ====================
@@ -450,30 +634,37 @@
                 return;
             }
 
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = "提交中...";
             fetch(baseUrl + '/editchapter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: userId,
-                    book_id: bookId,
-                    chapter_num: chapterNum,
-                    title: "第" + chapterNum + "章",
-                    content: newContent
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: userId,
+                        book_id: bookId,
+                        chapter_num: chapterNum,
+                        title: "第" + chapterNum + "章",
+                        content: newContent
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success === 1) {
-                    alert("修改成功！");
-                    document.getElementById("editBookId").value = "";
-                    document.getElementById("editBookName").value = "";
-                    document.getElementById("editChapterNum").value = "";
-                    document.getElementById("editChapterContent").value = "";
-                } else {
-                    alert("修改失败：" + (data.message || "未知错误"));
-                }
-            })
-            .catch(err => alert("网络错误"));
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success === 1) {
+                        alert("修改成功！");
+                        document.getElementById("editBookId").value = "";
+                        document.getElementById("editBookName").value = "";
+                        document.getElementById("editChapterNum").value = "";
+                        document.getElementById("editChapterContent").value = "";
+                    } else {
+                        alert("修改失败：" + (data.message || "未知错误"));
+                    }
+                })
+                .catch(function(err) { alert("网络错误"); })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.textContent = "提交修改";
+                });
         };
     </script>
 

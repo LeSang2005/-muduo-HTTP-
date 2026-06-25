@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 小说平台</title>
+    <!-- Vue3 + FontAwesome -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -16,190 +19,415 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3c 100%);
+            /* 和注册页统一深色背景渐变 */
+            background: #0c0e14;
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
             padding: 20px;
+            overflow-y: auto;
         }
 
-        .login-wrapper {
+        /* 浮动光晕背景 同注册页 */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: orbFloat 18s ease-in-out infinite alternate;
+        }
+        .orb:nth-child(1) {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #6c5ce7, transparent);
+            top: -15%;
+            left: -10%;
+            animation-duration: 22s;
+        }
+        .orb:nth-child(2) {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #00b894, transparent);
+            bottom: -20%;
+            right: -10%;
+            animation-duration: 26s;
+            animation-delay: -6s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 40px) scale(0.9); }
+            100% { transform: translate(30px, -20px) scale(1.05); }
+        }
+
+        #app {
             width: 100%;
             max-width: 400px;
+            position: relative;
+            z-index: 10;
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px 35px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(40px) saturate(1.4);
+            -webkit-backdrop-filter: blur(40px) saturate(1.4);
+            border-radius: 32px;
+            padding: 44px 36px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow:
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
             text-align: center;
+            animation: cardEntry 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes cardEntry {
+            0% { opacity: 0; transform: translateY(40px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            color: #6c5ce7;
+            filter: drop-shadow(0 8px 15px rgba(108, 92, 231, 0.3));
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-7px); }
         }
 
         .login-card h1 {
             color: #fff;
             font-size: 28px;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 60%, rgba(255,255,255,0.6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-
-        .login-card p {
-            color: #aaa;
+        .login-card .subtitle {
+            color: rgba(255, 255, 255, 0.45);
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             text-align: left;
+            position: relative;
         }
-
         .input-group label {
-            display: block;
-            color: #ccc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.5);
             font-size: 13px;
-            margin-bottom: 6px;
             font-weight: 500;
-            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .input-group label i {
+            color: rgba(255, 255, 255, 0.3);
         }
 
+        .input-wrap {
+            position: relative;
+        }
         .input-group input {
             width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
+            padding: 14px 46px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             transition: all 0.3s ease;
             outline: none;
         }
-
         .input-group input:focus {
-            border-color: aqua;
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+            border-color: rgba(108, 92, 231, 0.5);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.08);
+        }
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
         }
 
-        .input-group input::placeholder {
-            color: #666;
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.2);
+            pointer-events: none;
+        }
+        .pwd-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.2);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .pwd-toggle:hover {
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.6);
+        }
+
+        .error-tip {
+            color: #ff6b6b;
+            font-size: 12.5px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 107, 107, 0.06);
+            padding: 4px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 107, 107, 0.08);
+            animation: shakeError 0.4s ease;
+        }
+        @keyframes shakeError {
+            0%,100%{transform:translateX(0)}
+            20%{transform:translateX(-6px)}
+            40%{transform:translateX(6px)}
+            60%{transform:translateX(-4px)}
+            80%{transform:translateX(4px)}
         }
 
         .btn-row {
             display: flex;
             gap: 15px;
-            margin-top: 30px;
+            margin-top: 25px;
         }
-
         .btn {
             flex: 1;
-            padding: 13px 0;
+            padding: 14px 0;
             border: none;
-            border-radius: 12px;
+            border-radius: 18px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             text-decoration: none;
-            display: inline-block;
-            color: #000;
         }
-
         .btn-login {
-            background: aqua;
-            color: #000;
+            background: linear-gradient(135deg, #3a7bd5, #5b9cf5);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(58, 123, 213, 0.35);
         }
-
-        .btn-login:hover {
-            background: #00e6e6;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+        .btn-login:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 35px rgba(58, 123, 213, 0.45);
+        }
+        .btn-login:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            filter: grayscale(10%);
         }
 
         .btn-register {
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.7);
+            color: #1e293b;
+            border: 1.5px solid rgba(180, 200, 230, 0.7);
+            font-weight: 600;
+        }
+        .btn-register:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #3a7bd5;
+            color: #3a7bd5;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(58, 123, 213, 0.15);
         }
 
-        .btn-register:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: aqua;
-            color: aqua;
-            transform: translateY(-2px);
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .login-footer {
             margin-top: 25px;
-            color: #888;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .login-footer i {
             font-size: 12px;
+            color: rgba(255,255,255,0.15);
+        }
+
+        @media (max-width:480px) {
+            .login-card {
+                padding: 35px 25px;
+                border-radius: 30px;
+            }
+            .btn-row {
+                flex-direction: column;
+                gap: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div class="login-card">
-            <h1>📚 小说平台</h1>
-            <p>欢迎回来，请登录你的账号</p>
+    <!-- 背景光晕 和注册页面一致 -->
+    <div class="bg-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
 
+    <div id="app">
+        <div class="login-card">
+            <div class="logo-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h1>小说平台</h1>
+            <p class="subtitle">欢迎回来，请登录你的账号</p>
+
+            <!-- 账号输入 -->
             <div class="input-group">
-                <label>账号</label>
-                <input type="text" id="first" placeholder="请输入账号" required>
+                <label><i class="fas fa-user"></i>账号</label>
+                <div class="input-wrap">
+                    <input type="text" v-model="username" placeholder="请输入账号" @input="clearErr('username')">
+                    <i class="fas fa-user input-icon"></i>
+                </div>
+                <div v-if="err.username" class="error-tip">
+                    <i class="fas fa-exclamation-circle"></i>{{ err.username }}
+                </div>
             </div>
 
+            <!-- 密码输入 -->
             <div class="input-group">
-                <label>密码</label>
-                <input type="password" id="second" placeholder="请输入密码" required>
+                <label><i class="fas fa-lock"></i>密码</label>
+                <div class="input-wrap">
+                    <input :type="showPwd ? 'text' : 'password'" v-model="password" placeholder="请输入密码" @input="clearErr('password')">
+                    <i class="fas fa-lock input-icon"></i>
+                    <button class="pwd-toggle" @click="showPwd = !showPwd">
+                        <i class="fas" :class="showPwd ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </div>
+                <div v-if="err.password" class="error-tip">
+                    <i class="fas fa-exclamation-circle"></i>{{ err.password }}
+                </div>
             </div>
 
             <div class="btn-row">
-                <button class="btn btn-login" id="log">登录</button>
-                <a href="zhuche.html" class="btn btn-register" id="z_c">注册</a>
+                <button class="btn btn-login" @click="loginHandle" :disabled="loading">
+                    <span v-if="loading" class="spinner"></span>
+                    <i v-else class="fas fa-sign-in-alt"></i>
+                    {{ loading ? "登录中..." : "登录" }}
+                </button>
+                <a href="zhuche.html" class="btn btn-register">
+                    <i class="fas fa-user-plus"></i>注册
+                </a>
             </div>
 
             <div class="login-footer">
-                © 2026 小说平台 · 阅读无限
+                <i class="far fa-copyright"></i> 2026 小说平台 · 阅读无限
             </div>
         </div>
     </div>
 
-    <script>
-        // 动态获取基础URL，不再硬编码IP
-        var baseUrl = window.location.origin;
+<script>
+const { createApp, ref } = Vue;
+createApp({
+    setup() {
+        const baseUrl = window.location.origin;
+        const username = ref('');
+        const password = ref('');
+        const showPwd = ref(false);
+        const loading = ref(false);
+        const err = ref({
+            username: '',
+            password: ''
+        });
 
-        var log = document.getElementById("log");
-        var z_c = document.getElementById("z_c");
-        var first = document.getElementById("first");
-        var second = document.getElementById("second");
+        // 清除错误提示
+        const clearErr = (key) => {
+            err.value[key] = '';
+        }
 
-        log.onclick = function clickfunc() {
-            var username = first.value;
-            var password = second.value;
-            if(username===""||username===""){
-                alert("不能为空");
-                return;
+        // 表单校验
+        const validate = () => {
+            let flag = true;
+            err.value.username = '';
+            err.value.password = '';
+            if (!username.value.trim()) {
+                err.value.username = '账号不能为空';
+                flag = false;
             }
-            fetch(baseUrl + '/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
+            if (!password.value.trim()) {
+                err.value.password = '密码不能为空';
+                flag = false;
+            }
+            return flag;
+        }
+
+        // 登录请求【接口完全不动，参数/地址/返回逻辑和原生JS一模一样】
+        const loginHandle = async () => {
+            if (!validate()) return;
+            loading.value = true;
+            try {
+                const res = await fetch(baseUrl + '/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username.value,
+                        password: password.value
+                    })
+                });
+                const data = await res.json();
                 if (data.success === 1) {
-                    sessionStorage.setItem('userId', data.userId || username);
+                    sessionStorage.setItem('userId', data.userId || username.value);
                     window.location.href = baseUrl + '/menu.html';
                 } else {
                     alert('登录失败：' + (data.message || '账号或密码错误'));
                 }
-            })
+            } catch (e) {
+                console.error(e);
+                alert('网络请求失败，请重试');
+            } finally {
+                loading.value = false;
+            }
         }
-    </script>
+
+        return {
+            username,
+            password,
+            showPwd,
+            loading,
+            err,
+            clearErr,
+            loginHandle
+        }
+    }
+}).mount('#app')
+</script>
 </body>
 </html>

@@ -390,12 +390,16 @@ CMakeFiles/httpserver.dir/src/main.cpp.o: \
  /home/sang/桌面/http/include/rname.h \
  /home/sang/桌面/http/include/rpassword.h \
  /home/sang/桌面/http/include/booklist.h \
- /home/sang/桌面/http/include/chapterlist.h \
- /home/sang/桌面/http/include/readchapter.h \
  /home/sang/桌面/http/include/bookinfo.h \
  /home/sang/桌面/http/include/createbook.h \
  /home/sang/桌面/http/include/updateEdit.h \
+ /home/sang/桌面/http/include/mybook.h \
+ /home/sang/桌面/http/include/findbooks.h \
+ /home/sang/桌面/http/include/chapterlist.h \
+ /home/sang/桌面/http/include/readchapter.h \
  /home/sang/桌面/http/include/createchapter.h \
  /home/sang/桌面/http/include/editchapter.h \
  /home/sang/桌面/http/include/reviewlist.h \
- /home/sang/桌面/http/include/review.h
+ /home/sang/桌面/http/include/review.h \
+ /home/sang/桌面/http/include/bookreviewlist.h \
+ /home/sang/桌面/http/include/bookreview.h

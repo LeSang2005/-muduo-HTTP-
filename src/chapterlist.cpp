@@ -2,7 +2,7 @@
 chapterlist::chapterlist(){
     setmethodname("chapterlist");
 }
-std::string chapterlist::send(){
+std::string chapterlist::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);

@@ -4,7 +4,7 @@ review::review() {
     setmethodname("review");
 }
 
-std::string review::send() {
+std::string review::send(std::string message_) {
     json js_r;
     json js = json::parse(message_);
     std::string userid = js.value("userid", "");

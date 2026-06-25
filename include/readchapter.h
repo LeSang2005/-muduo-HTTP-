@@ -5,5 +5,5 @@
 class readchapter: public bridge{
     public:
     readchapter();
-    std::string send()override;
+    std::string send(std::string message_)override;
 };

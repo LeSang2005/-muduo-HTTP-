@@ -3,5 +3,5 @@
 class createbook:public bridge{
 public:
 createbook();
-std::string send();
+std::string send(std::string message_);
 };

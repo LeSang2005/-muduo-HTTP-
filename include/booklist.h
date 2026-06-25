@@ -3,5 +3,5 @@
 class booklist: public bridge{
     public:
     booklist();
-    std::string send()override;
+    std::string send(std::string message_)override;
 };

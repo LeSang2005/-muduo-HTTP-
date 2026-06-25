@@ -13,19 +13,22 @@ public:
 login(){
     setmethodname("login");
 }
-std::string send(){
+std::string send(std::string message_){
 json js=json::parse(message_);
-std::cout<<js<<std::endl;
+
 std::string user=js["username"];
 std::string password=js["password"];
 std::shared_ptr<MySql>login_find=mysqlPool::instance().pop();
-
+if(login_find==nullptr){
+    LOG_WARN("数据库句柄为空");
+    return  R"({"success":0,"message":"请求太频繁"})";
+}
 if (!RateLimiter::instance().allow(user, 5, 60)) {
     return R"({"success":0,"message":"请求太频繁"})";
 }
 std::string word="select password from users where id=";
 word=word+login_find->escape(user)+";";
-
+//word=word+user+";";
 
 std::shared_ptr<MYSQL_RES>res=login_find->find(word);
 MYSQL_ROW row;
@@ -46,20 +49,20 @@ if(res_password==hashed){
         std::unique_lock<std::mutex>lock_(HttpServer::idOfConnMtx_);
         ptr=HttpServer::IdOfConn[message_];
     }
-    ptr->getLoop()->runInLoop([mess,ptr](){
-        ptr->setCloseCallback([mess](const muduo::net::TcpConnectionPtr& conn){
+    // ptr->getLoop()->runInLoop([mess,ptr](){
+    //     ptr->setCloseCallback([mess](const muduo::net::TcpConnectionPtr& conn){
             
-            std::unique_lock<std::mutex>lock(login::login_mutex);
-            json js_=json::parse(mess);
-             login::users.erase(js_["username"]);
-             {
-                std::unique_lock<std::mutex>lock_(HttpServer::idOfConnMtx_);
-                 HttpServer::IdOfConn.erase(mess);
-             }
+    //         std::unique_lock<std::mutex>lock(login::login_mutex);
+    //         json js_=json::parse(mess);
+    //          login::users.erase(js_["username"]);
+    //          {
+    //             std::unique_lock<std::mutex>lock_(HttpServer::idOfConnMtx_);
+    //              HttpServer::IdOfConn.erase(mess);
+    //          }
            
-            conn->shutdown();
-        });
-    });
+    //         conn->shutdown();
+    //     });
+    // });
 }
 else{
     response["success"]=0;

@@ -80,6 +80,7 @@
 <body>
     <div id="headtop">
         <span class="btn" id="backToBookCity">📚 返回书城</span>
+        <span class="btn" id="readbook">开启朗读</span>
         <span>
             <span class="btn" id="backToBookHome">📖 本书主页</span>
             <a href="menu.html" class="btn" style="text-decoration:none;">返回首页</a>
@@ -222,6 +223,71 @@
             loadContent();
             updateNav();
         });
+
+
+      let readbookbutton = false;
+      const synth = window.speechSynthesis;
+      const readbook = document.getElementById("readbook");
+      let voiceList = [];
+       speechSynthesis.onvoiceschanged = () => {
+       voiceList = synth.getVoices();
+       };
+
+// 精准筛选中文男声，排除女声
+function getZhMaleVoice() {
+    // 关键词：男声、云扬、晓辰、鸿远 主流系统男声名称
+    const maleKeys = ["男声", "云扬", "晓辰", "鸿远", "Alan", "Yunyang"];
+    // 女声关键词直接排除
+    const femaleKeys = ["女声", "晓晓", "云希", "小美", "Xiaoxiao"];
+
+    // 先找纯中文匹配的男声
+    let maleVoices = voiceList.filter(v => {
+        if (!v.lang.includes("zh")) return false;
+        // 包含男声关键词，且不含女声关键词
+        const isMale = maleKeys.some(k => v.name.includes(k));
+        const isFemale = femaleKeys.some(k => v.name.includes(k));
+        return isMale && !isFemale;
+    });
+
+    if (maleVoices.length > 0) return maleVoices[0];
+    // 没专用男声就调低音调模拟男声
+    return voiceList.find(v => v.lang.includes("zh"));
+}
+
+function speakChapter() {
+    synth.cancel();
+    const text = document.getElementById("content").textContent.trim();
+    if (!text) return;
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "zh-CN";
+    utter.rate = 0.9;
+    utter.pitch = 0.78; // 更低音调，浑厚男声效果
+    utter.volume = 1;
+    const maleVoice = getZhMaleVoice();
+    if (maleVoice) utter.voice = maleVoice;
+
+    // 读完自动下一章
+    utter.onend = () => {
+        if (readbookbutton && currentIndex < chapters.length - 1) {
+            goNext();
+            setTimeout(() => speakChapter(), 600);
+        }
+    };
+    synth.speak(utter);
+}
+
+readbook.onclick = function () {
+    if (!readbookbutton) {
+        readbookbutton = true;
+        this.textContent = "停止朗读";
+        speakChapter();
+    } else {
+        readbookbutton = false;
+        synth.cancel();
+        this.textContent = "开启朗读";
+    }
+};
     </script>
 </body>
 </html>

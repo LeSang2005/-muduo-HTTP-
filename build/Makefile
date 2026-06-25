@@ -202,6 +202,54 @@ src/booklist.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/booklist.cpp.s
 .PHONY : src/booklist.cpp.s
 
+src/bookreview.o: src/bookreview.cpp.o
+.PHONY : src/bookreview.o
+
+# target to build an object file
+src/bookreview.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreview.cpp.o
+.PHONY : src/bookreview.cpp.o
+
+src/bookreview.i: src/bookreview.cpp.i
+.PHONY : src/bookreview.i
+
+# target to preprocess a source file
+src/bookreview.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreview.cpp.i
+.PHONY : src/bookreview.cpp.i
+
+src/bookreview.s: src/bookreview.cpp.s
+.PHONY : src/bookreview.s
+
+# target to generate assembly for a file
+src/bookreview.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreview.cpp.s
+.PHONY : src/bookreview.cpp.s
+
+src/bookreviewlist.o: src/bookreviewlist.cpp.o
+.PHONY : src/bookreviewlist.o
+
+# target to build an object file
+src/bookreviewlist.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o
+.PHONY : src/bookreviewlist.cpp.o
+
+src/bookreviewlist.i: src/bookreviewlist.cpp.i
+.PHONY : src/bookreviewlist.i
+
+# target to preprocess a source file
+src/bookreviewlist.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.i
+.PHONY : src/bookreviewlist.cpp.i
+
+src/bookreviewlist.s: src/bookreviewlist.cpp.s
+.PHONY : src/bookreviewlist.s
+
+# target to generate assembly for a file
+src/bookreviewlist.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.s
+.PHONY : src/bookreviewlist.cpp.s
+
 src/chapterlist.o: src/chapterlist.cpp.o
 .PHONY : src/chapterlist.o
 
@@ -346,6 +394,30 @@ src/find.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/find.cpp.s
 .PHONY : src/find.cpp.s
 
+src/findbooks.o: src/findbooks.cpp.o
+.PHONY : src/findbooks.o
+
+# target to build an object file
+src/findbooks.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/findbooks.cpp.o
+.PHONY : src/findbooks.cpp.o
+
+src/findbooks.i: src/findbooks.cpp.i
+.PHONY : src/findbooks.i
+
+# target to preprocess a source file
+src/findbooks.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/findbooks.cpp.i
+.PHONY : src/findbooks.cpp.i
+
+src/findbooks.s: src/findbooks.cpp.s
+.PHONY : src/findbooks.s
+
+# target to generate assembly for a file
+src/findbooks.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/findbooks.cpp.s
+.PHONY : src/findbooks.cpp.s
+
 src/login.o: src/login.cpp.o
 .PHONY : src/login.o
 
@@ -393,6 +465,30 @@ src/main.s: src/main.cpp.s
 src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
+
+src/mybook.o: src/mybook.cpp.o
+.PHONY : src/mybook.o
+
+# target to build an object file
+src/mybook.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/mybook.cpp.o
+.PHONY : src/mybook.cpp.o
+
+src/mybook.i: src/mybook.cpp.i
+.PHONY : src/mybook.i
+
+# target to preprocess a source file
+src/mybook.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/mybook.cpp.i
+.PHONY : src/mybook.cpp.i
+
+src/mybook.s: src/mybook.cpp.s
+.PHONY : src/mybook.s
+
+# target to generate assembly for a file
+src/mybook.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/httpserver.dir/build.make CMakeFiles/httpserver.dir/src/mybook.cpp.s
+.PHONY : src/mybook.cpp.s
 
 src/mysqlpool.o: src/mysqlpool.cpp.o
 .PHONY : src/mysqlpool.o
@@ -628,6 +724,12 @@ help:
 	@echo "... src/booklist.o"
 	@echo "... src/booklist.i"
 	@echo "... src/booklist.s"
+	@echo "... src/bookreview.o"
+	@echo "... src/bookreview.i"
+	@echo "... src/bookreview.s"
+	@echo "... src/bookreviewlist.o"
+	@echo "... src/bookreviewlist.i"
+	@echo "... src/bookreviewlist.s"
 	@echo "... src/chapterlist.o"
 	@echo "... src/chapterlist.i"
 	@echo "... src/chapterlist.s"
@@ -646,12 +748,18 @@ help:
 	@echo "... src/find.o"
 	@echo "... src/find.i"
 	@echo "... src/find.s"
+	@echo "... src/findbooks.o"
+	@echo "... src/findbooks.i"
+	@echo "... src/findbooks.s"
 	@echo "... src/login.o"
 	@echo "... src/login.i"
 	@echo "... src/login.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/mybook.o"
+	@echo "... src/mybook.i"
+	@echo "... src/mybook.s"
 	@echo "... src/mysqlpool.o"
 	@echo "... src/mysqlpool.i"
 	@echo "... src/mysqlpool.s"

@@ -3,6 +3,6 @@
 class bookinfo: public bridge{
 public:
 bookinfo();
-std::string send()override;
+std::string send(std::string message_)override;
 private:
 };

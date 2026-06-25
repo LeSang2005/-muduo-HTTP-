@@ -3,7 +3,7 @@
 find::find(){
     setmethodname("find");
 }
-std::string find::send(){
+std::string find::send(std::string message_){
     std::string response;
     json js_r;
     json js=json::parse(message_);

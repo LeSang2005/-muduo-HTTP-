@@ -1,0 +1,11 @@
+ss -tlnp | grep 8080 查看端口
+lsof -i :8080查看进程
+kill 2279杀进程
+nohup ./httpserver >log.txt 2>&1 &
+nohup保证后端运行，>log.txt吧打印打印到log.txt
+
+&后台运行
+0程序输出
+1标准输出
+2标准错误
+2>定向写在，log.txt也就是1的位置（这个程序的）

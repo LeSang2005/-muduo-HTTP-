@@ -15,6 +15,8 @@ void settime(){time.setnow();}
 long long gettime(){return time.alive();}
 MYSQL* outinit(){return mysql;}
 std::string escape(const std::string& input);
+bool isAlive();
+bool reconnection();
 private:
 MySql(const MySql&) = delete;
 MySql& operator=(const MySql&) = delete;

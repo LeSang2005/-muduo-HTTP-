@@ -6,7 +6,7 @@ createchapter::createchapter() {
     setmethodname("uploadchapter");
 }
 
-std::string createchapter::send() {
+std::string createchapter::send(std::string message_) {
     json js_r;
     json js = json::parse(message_);
 

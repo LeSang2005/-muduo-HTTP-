@@ -3,5 +3,5 @@
 class rname:public bridge{
 public:
 rname();
-std::string send()override;
+std::string send(std::string message_)override;
 };

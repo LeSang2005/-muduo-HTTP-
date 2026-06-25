@@ -1,0 +1,2244 @@
+addSave.h
+#pragma once
+#include <openssl/evp.h>
+#include <sstream>
+#include <iomanip>
+#include <string>
+
+inline std::string sha256(const std::string& str) {
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if (!ctx) return "";
+
+    const EVP_MD* md = EVP_sha256();
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hashLen = 0;
+
+    EVP_DigestInit_ex(ctx, md, nullptr);
+    EVP_DigestUpdate(ctx, str.c_str(), str.size());
+    EVP_DigestFinal_ex(ctx, hash, &hashLen);
+    EVP_MD_CTX_free(ctx);
+
+    std::stringstream ss;
+    for (unsigned int i = 0; i < hashLen; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
+    return ss.str();
+}
+bookinfo.h
+#pragma once
+#include"bridge.h"
+class bookinfo: public bridge{
+public:
+bookinfo();
+std::string send()override;
+private:
+};
+booklist.h
+#pragma once
+#include"bridge.h"
+class booklist: public bridge{
+    public:
+    booklist();
+    std::string send()override;
+};
+bridge.h
+#pragma once
+#include <string>
+#include <json.hpp>
+#include <memory>
+#include <muduo/net/TcpConnection.h>
+#include <muduo/net/InetAddress.h>
+#include "mysqlpool.h"
+
+class bridge {
+public:
+    using json = nlohmann::json;
+    void setmessage(std::string message) { message_ = message; }
+    void setmethodname(std::string name) { methodName = name; }
+    bool ismethod(std::string name) { return name == methodName; }
+    bool isMethodEmpty() { return methodName.empty(); }
+    std::string outMethName() { return methodName; }
+    virtual std::string send() { return ""; }
+
+    // 设置连接指针（在 handlequeue 中调用）
+    void setConnection(const muduo::net::TcpConnectionPtr& conn) {
+        ptr_ = conn;
+    }
+
+    // 获取客户端 IP:Port 字符串（例如 "192.168.1.100:54321"）
+    std::string getClientIP() {
+        if (ptr_) {
+            auto addr = ptr_->peerAddress();
+            return addr.toIpPort();
+        }
+        return "unknown";
+    }
+
+protected:
+    std::string message_;
+    std::string methodName;
+    muduo::net::TcpConnectionPtr ptr_;
+};
+chapterlist.h
+#pragma once
+#include"bridge.h"
+class chapterlist:public bridge{
+public:
+chapterlist();
+std::string send()override;
+};
+createbook.h
+#pragma once
+#include"bridge.h"
+class createbook:public bridge{
+public:
+createbook();
+std::string send();
+};
+createchapter.h
+#pragma once
+#include"bridge.h"
+#include <fstream>
+#include <iterator>
+#include <filesystem>
+class createchapter :public bridge{
+public:
+createchapter();
+std::string send();
+};
+db.h
+#pragma once
+#include"mysql/mysql.h"
+#include<string>
+#include<iostream>
+#include<memory>
+#include"Timestamp.h"
+class MySql{
+public:
+MySql();
+~MySql();
+bool insert(std::string word);
+std::shared_ptr<MYSQL_RES> find(std::string word);
+bool update(std::string word);
+void settime(){time.setnow();}
+long long gettime(){return time.alive();}
+MYSQL* outinit(){return mysql;}
+std::string escape(const std::string& input);
+bool isAlive();
+bool reconnection();
+private:
+MySql(const MySql&) = delete;
+MySql& operator=(const MySql&) = delete;
+MYSQL* mysql;
+Timestamp time;
+};
+editchapter.h
+#pragma once
+#include "bridge.h"
+#include <fstream>
+#include <filesystem>
+
+class editchapter : public bridge {
+public:
+    editchapter();
+    std::string send() override;
+};
+find.h
+#pragma once
+#include"bridge.h"
+class find: public bridge{
+public:
+find();
+std::string send()override;
+};
+HttpServer.h
+#pragma once
+#include<muduo/net/TcpServer.h>
+#include<muduo/net/TcpConnection.h>
+#include<muduo/net/Callbacks.h>
+#include<functional>
+#include<muduo/net/Buffer.h>
+#include<muduo/net/EventLoop.h>
+#include<string>
+#include <cerrno>
+#include"postqueue.h"
+#include"bridge.h"
+#include<memory>
+#include<iostream>
+#include"unordered_map"
+#include"ReadLog.h"
+class HttpServer{
+public:
+HttpServer();
+~HttpServer()=default;
+void run();
+void setbridge(std::shared_ptr<bridge>b){
+    if(b->isMethodEmpty()){
+        LOG_ERROR("方法没有设置");
+        exit(1);
+    }
+    b_.insert({b->outMethName(),b});
+}
+static std::unordered_map<std::string,muduo::net::TcpConnectionPtr>IdOfConn;
+void setThreadsize(int num){threadNum_=num;}
+static std::mutex idOfConnMtx_;
+private:
+std::string error(){
+std::string response="HTTP/1.1 404 Not Found\r\n";
+                                response+="Content-Type:text/html; charset=utf-8\r\n";
+                                response+="Content-Length:13\r\n";
+                                response+="\r\n";
+                                response+="404 Not Found";
+                                return response;
+}
+void onMessage(const muduo::net::TcpConnectionPtr&,
+                            muduo::net::Buffer*,
+                            muduo::Timestamp);
+void onConnection(const muduo::net::TcpConnectionPtr&);
+
+muduo::net::InetAddress readfile();
+std::string ip;
+int port;
+muduo::net::InetAddress addr_;
+muduo::net::EventLoop loop_;
+muduo::net::TcpServer tcpserver_;
+//web_queue shareWithHttpServer_q;
+std::unordered_map<std::string,std::shared_ptr<bridge>>b_;
+std::unordered_map<void*, std::string> connBuf_;  // 用裸指针作为key，存储每个连接的累积数据
+void handlequeue();
+std::mutex mapReadMtx_;
+int threadNum_;
+};
+login.h
+#pragma once
+#include"bridge.h"
+#include<iostream>
+#include"HttpServer.h"
+#include<functional>
+#include<mutex>
+#include"addSave.h"
+#include <muduo/net/TcpConnection.h>   
+#include <muduo/net/InetAddress.h>  
+#include"RateLimiter.h"
+class login: public bridge{
+public:
+login(){
+    setmethodname("login");
+}
+std::string send(){
+json js=json::parse(message_);
+
+std::string user=js["username"];
+std::string password=js["password"];
+std::shared_ptr<MySql>login_find=mysqlPool::instance().pop();
+if(login_find==nullptr){
+    LOG_WARN("数据库句柄为空");
+    return  R"({"success":0,"message":"请求太频繁"})";
+}
+if (!RateLimiter::instance().allow(user, 5, 60)) {
+    return R"({"success":0,"message":"请求太频繁"})";
+}
+std::string word="select password from users where id=";
+word=word+login_find->escape(user)+";";
+
+
+std::shared_ptr<MYSQL_RES>res=login_find->find(word);
+MYSQL_ROW row;
+std::string res_password="";
+while((row=mysql_fetch_row(res.get()))){
+res_password=row[0];
+}
+json response;
+
+std::string salt = "readbook_2026.6.18";   
+std::string hashed = sha256(salt + password); // 同样方式算出“苹果泥”
+if(res_password==hashed){
+    response["success"]=1;
+    users.insert({user,1});
+    std::string mess=message_;
+    muduo::net::TcpConnectionPtr ptr;
+    {
+        std::unique_lock<std::mutex>lock_(HttpServer::idOfConnMtx_);
+        ptr=HttpServer::IdOfConn[message_];
+    }
+    // ptr->getLoop()->runInLoop([mess,ptr](){
+    //     ptr->setCloseCallback([mess](const muduo::net::TcpConnectionPtr& conn){
+            
+    //         std::unique_lock<std::mutex>lock(login::login_mutex);
+    //         json js_=json::parse(mess);
+    //          login::users.erase(js_["username"]);
+    //          {
+    //             std::unique_lock<std::mutex>lock_(HttpServer::idOfConnMtx_);
+    //              HttpServer::IdOfConn.erase(mess);
+    //          }
+           
+    //         conn->shutdown();
+    //     });
+    // });
+}
+else{
+    response["success"]=0;
+}
+std::string target=response.dump();
+return target;
+}
+static std::unordered_map<std::string,int>users;
+static std::mutex login_mutex;
+};
+mysqlpool.h
+#pragma once
+#include"db.h"
+#include<queue>
+#include"condition_variable"
+#include"mutex"
+#include"memory"
+#include<thread>
+#include<atomic>
+class mysqlPool{
+public:
+static mysqlPool& instance();
+std::shared_ptr<MySql> pop();
+~mysqlPool();
+private:
+
+mysqlPool();
+mysqlPool(mysqlPool &p)=delete;
+mysqlPool(mysqlPool &&p)=delete;
+mysqlPool& operator=(mysqlPool& p)=delete;
+int num_;
+int maxnum_;
+int minnum_;
+std::queue<MySql*>q;
+std::mutex mtx_;
+std::condition_variable cond_;
+void destory();
+};
+postqueue.h
+#pragma once
+#include<queue>
+#include<mutex>
+#include<string>
+#include<memory>
+#include<iostream>
+#include<condition_variable>
+#include<muduo/net/TcpConnection.h>
+struct post_struct{
+    std::string method;
+    std::string data;
+    muduo::net::TcpConnectionPtr ptr_;
+}; 
+class web_queue{
+public:
+post_struct pop(){
+    std::unique_lock<std::mutex>lock(q_m);
+    while(web_q.empty()){
+        
+        cond_.wait(lock);
+    }
+    
+    auto message=web_q.front();
+    web_q.pop();
+
+    return message;
+}
+void push(post_struct message){
+ std::unique_lock<std::mutex>lock(q_m);
+ web_q.push(message);
+
+ cond_.notify_all();
+}
+bool empty(){
+    std::lock_guard<std::mutex>lock(q_m);
+    return web_q.empty();
+}
+static web_queue& instance();
+std::condition_variable& outCondition(){
+    return cond_;
+}
+private:
+web_queue(){}
+std::queue<post_struct>web_q;
+std::condition_variable cond_;
+std::mutex q_m;
+};
+inline web_queue& web_queue::instance()
+{
+    static web_queue q;
+    return q;
+}
+RateLimiter.h
+#pragma once
+#include <unordered_map>
+#include <string>
+#include <mutex>
+#include <queue>
+#include <chrono>
+#include<ReadLog.h>
+class RateLimiter {
+public:
+    static RateLimiter& instance() {
+        static RateLimiter rl;
+        return rl;
+    }
+
+    bool allow(const std::string& ip, int maxRequests, int seconds) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        
+        // 当前时间点（单调时钟，不会往回跳）
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        
+        // 这个 IP 的访问记录队列
+        std::queue<std::chrono::steady_clock::time_point>& records = records_[ip];
+        
+        // 清理超过时间窗口的旧记录
+        while (!records.empty()) {
+            // 队首记录距今多少秒
+            std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - records.front());
+            if (elapsed.count() > seconds) {
+                records.pop(); // 超时了，扔掉
+            } else {
+                break; // 队首还没超时，后面的更不会超时，不用继续了
+            }
+        }
+        
+        // 如果队列长度 >= 允许的最大次数，拒绝
+        if (records.size() >= maxRequests) {
+            LOG_WARN(ip+"访问频繁");
+            return false;
+
+        }
+        
+        // 记录这次访问
+        records.push(now);
+        return true;
+    }
+
+private:
+    std::mutex mtx_;
+    std::unordered_map<std::string, std::queue<std::chrono::steady_clock::time_point>> records_;
+};
+readchapter.h
+#pragma once
+#include"bridge.h"
+#include <fstream>
+#include <iterator>
+class readchapter: public bridge{
+    public:
+    readchapter();
+    std::string send()override;
+};
+ReadLog.h
+#pragma once
+#include <mutex>
+#include <condition_variable>
+#include <memory>
+#include <queue>
+#include <filesystem>
+#include <fstream>
+#include <ctime>
+#include <chrono>
+#include <string>
+#include <thread>
+
+class ReadLog {
+public:
+    enum Level {
+        DEBUG = 0,
+        INFO,
+        WARN,
+        ERROR,
+        FATAL
+    };
+
+    struct message {
+        std::string message;
+        std::string Date;
+        std::string Time;
+        Level level;
+    };
+
+    void push(message mess) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        Log_q.push(mess);
+        cond_.notify_one();
+    }
+
+    void LogWork() {
+        while (1) {
+            message mess;
+            {
+                std::unique_lock<std::mutex> lock(mtx_);
+                while (Log_q.empty()) {
+                    cond_.wait(lock);
+                }
+                mess = Log_q.front();
+                Log_q.pop();
+            }
+
+            std::string path = "./log/";
+            path += mess.Date;
+            std::filesystem::create_directories(path);
+            path = path + "/" + mess.Date + ".txt";
+            std::ofstream f(path, std::ios::app);
+            std::string word = mess.Time + mess.message + "\n";
+            if (mess.level == DEBUG) {
+                word = "DEBUG:" + word;
+            } else if (mess.level == WARN) {
+                word = "WARN:" + word;
+            } else if (mess.level == INFO) {
+                word = "INFO:" + word;
+            } else if (mess.level == ERROR) {
+                word = "ERROR:" + word;
+            } else if (mess.level == FATAL) {
+                word = "FATAL:" + word;
+            }
+            f << word;
+        }
+    }
+
+    static ReadLog& instance();
+    static std::string getCurrentDate();
+    static std::string getCurrentTime();
+
+private:
+    ReadLog() {
+        std::thread(&ReadLog::LogWork, this).detach();
+    }
+    std::condition_variable cond_;
+    std::mutex mtx_;
+    std::queue<message> Log_q;
+};
+
+inline ReadLog& ReadLog::instance() {
+    static ReadLog readLog;
+    return readLog;
+}
+
+inline std::string ReadLog::getCurrentDate() {
+    auto now = std::chrono::system_clock::now();
+    auto currentTime = std::chrono::system_clock::to_time_t(now);
+    auto tm = std::localtime(&currentTime);
+    std::string currentDate = std::to_string(tm->tm_year + 1900) + '-'
+                            + std::to_string(tm->tm_mon + 1) + '-'
+                            + std::to_string(tm->tm_mday);
+    return currentDate;
+}
+
+inline std::string ReadLog::getCurrentTime() {
+    auto now = std::chrono::system_clock::now();
+    auto currentTime = std::chrono::system_clock::to_time_t(now);
+    auto tm = std::localtime(&currentTime);
+    std::string currentDate = "[" + std::to_string(tm->tm_year + 1900) + '-'
+                            + std::to_string(tm->tm_mon + 1) + '-'
+                            + std::to_string(tm->tm_mday) + ' '
+                            + std::to_string(tm->tm_hour) + ':'
+                            + std::to_string(tm->tm_min) + ':'
+                            + std::to_string(tm->tm_sec) + "] ";
+    return currentDate;
+}
+
+// 快捷宏：自动填充时间和日期
+#define LOG_DEBUG(msg) do { \
+    ReadLog::message _m; \
+    _m.message = (msg); \
+    _m.Date = ReadLog::getCurrentDate(); \
+    _m.Time = ReadLog::getCurrentTime(); \
+    _m.level = ReadLog::DEBUG; \
+    ReadLog::instance().push(_m); \
+} while(0)
+
+#define LOG_INFO(msg) do { \
+    ReadLog::message _m; \
+    _m.message = (msg); \
+    _m.Date = ReadLog::getCurrentDate(); \
+    _m.Time = ReadLog::getCurrentTime(); \
+    _m.level = ReadLog::INFO; \
+    ReadLog::instance().push(_m); \
+} while(0)
+
+#define LOG_WARN(msg) do { \
+    ReadLog::message _m; \
+    _m.message = (msg); \
+    _m.Date = ReadLog::getCurrentDate(); \
+    _m.Time = ReadLog::getCurrentTime(); \
+    _m.level = ReadLog::WARN; \
+    ReadLog::instance().push(_m); \
+} while(0)
+
+#define LOG_ERROR(msg) do { \
+    ReadLog::message _m; \
+    _m.message = (msg); \
+    _m.Date = ReadLog::getCurrentDate(); \
+    _m.Time = ReadLog::getCurrentTime(); \
+    _m.level = ReadLog::ERROR; \
+    ReadLog::instance().push(_m); \
+} while(0)
+
+#define LOG_FATAL(msg)do{\
+ReadLog::message _m;\
+_m.message=(msg);\
+_m.Date=ReadLog::getCurrentDate();\
+_m.Time=ReadLog::getCurrentTime();\
+_m.level=ReadLog::FATAL;\
+ReadLog::instance().push(_m); \
+std::this_thread::sleep_for(std::chrono::milliseconds(100));\
+exit(EXIT_FAILURE);\
+}while(0)
+
+review.h
+#pragma once
+#include "bridge.h"
+
+class review : public bridge {
+public:
+    review();
+    std::string send() override;
+};
+reviewlist.h
+#pragma once
+#include "bridge.h"
+
+class reviewlist : public bridge {
+public:
+    reviewlist();
+    std::string send() override;
+};
+rname.h
+#pragma once
+#include"bridge.h"
+class rname:public bridge{
+public:
+rname();
+std::string send()override;
+};
+rpassword.h
+#pragma once
+#include"bridge.h"
+class rpassword:public bridge{
+public:
+rpassword();
+std::string send()override;
+};
+Timestamp.h
+#pragma once
+#include<chrono>
+class Timestamp{
+public:
+void setnow(){
+    t_=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+}
+long long alive(){
+    return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())-t_;
+}
+private:
+std::time_t t_;
+};
+updateEdit.h
+#pragma once
+#include"bridge.h"
+class updateEdit: public bridge{
+public:
+updateEdit();
+std::string send();
+};
+web.h
+#pragma once
+#include<string>
+#include<functional>
+#include<iostream>
+#include<unordered_map>
+#include<muduo/net/TcpConnection.h>
+#include"postqueue.h"
+class web{
+public:
+enum ResponseStyle{
+file,
+text_html,
+json,
+video,
+audio,
+text,
+END
+};
+web();
+void setmessage(std::string message_){
+    message=message_; 
+}
+void setstyle(ResponseStyle style){
+style_=style;
+}
+void setTcpPtr(muduo::net::TcpConnectionPtr ptr){
+    ptr_=ptr;
+}
+static::std::string setpost(std::string mess);
+void run();
+static std::string error();
+private:
+//std::string response_basemodel();
+void dealget(std::string source);
+void dealpost(std::string source);
+void dealoptions(std::string source);
+
+std::string message;
+std::unordered_map<std::string,std::function<void(std::string)>>web_function;
+ResponseStyle style_;
+muduo::net::TcpConnectionPtr ptr_;
+std::unordered_map<ResponseStyle,std::string>r_style;
+std::unordered_map<std::string,ResponseStyle>s_style;
+
+};
+zhuche.h
+#pragma once
+#include"bridge.h"
+#include<string>
+class zhuche:public bridge{
+public:
+zhuche();
+std::string send()override;
+};
+bookinfo.cpp
+#include"bookinfo.h"
+bookinfo::bookinfo(){
+    setmethodname("bookinfo");
+}
+
+std::string bookinfo::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string book_id=js["book_id"];
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select * from book where bid=";
+    word=word+mysql->escape(book_id)+";";
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    std::string bname;
+    std::string author;
+    std::string description;
+    while(row=mysql_fetch_row(res.get())){
+       bname = row[1] ? row[1] : "";
+       //std::cout<<bname<<std::endl;
+       author = row[2] ? row[2] : "";
+       description = (row[3] && row[3]) ? row[3] : "";
+    }
+    json resp;
+    resp["success"] = 1;
+    json book;
+    book["bname"] = bname;
+    book["author"] = author;
+    book["description"] = description;
+    resp["book"] = book;
+    response = resp.dump();
+    response=js_r.dump();
+    return resp.dump();
+}
+booklist.cpp
+#include"booklist.h"
+booklist::booklist(){
+    setmethodname("booklist");
+}
+std::string booklist::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int page=js["page"];
+    int size=js["size"];
+    page=(page-1)*10;
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select count(*) from book";
+    auto res=mysql->find(word);
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+    int total=atoi(std::string(row[0]).c_str());
+    js_r["totalPages"]=total;
+    word="select * from book limit ";
+    word=word+mysql->escape(std::to_string(page))+","+mysql->escape(std::to_string(size))+";";
+    res=mysql->find(word);
+    js_r["books"]=json::array();
+    while(row=mysql_fetch_row(res.get())){
+        json book;
+        book["id"]=std::string(row[0]);
+        book["bname"]=std::string(row[1]);
+        book["author"]=std::string(row[2]);
+        js_r["books"].push_back(book);
+    }
+    js_r["success"]=1;
+    response=js_r.dump();
+    return response;
+}
+chapterlist.cpp
+#include"chapterlist.h"
+chapterlist::chapterlist(){
+    setmethodname("chapterlist");
+}
+std::string chapterlist::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string bid=js["book_id"];
+    std::string word="select * from chapter where bid=";
+    
+    auto mysql=mysqlPool::instance().pop();
+    word=word+mysql->escape(bid);
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    js_r["chapters"]=json::array();
+    while(row=mysql_fetch_row(res.get())){
+        std::string cid=std::string(row[1]);
+        std::string chapter_num=std::string(row[1]);
+        std::string title=std::string(row[2]);
+        std::string status=std::string(row[4]);
+        json chap;
+        chap["id"]=cid;
+        chap["chapter_num"]=chapter_num;
+        chap["title"]=title;
+        if(status=="1"){
+            chap["status"]=status;
+        }
+        else{
+            continue;
+        }
+        js_r["chapters"].push_back(chap);
+    }
+    js_r["success"]=1;
+    response=js_r.dump();
+    return response;
+}
+createbook.cpp
+#include"createbook.h"
+#include"ReadLog.h"
+createbook::createbook(){
+    setmethodname("createbook");
+}
+
+std::string createbook::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    std::string userid;
+
+    if(!js["username"].is_null()){
+        userid=js["username"];
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="没有登录";
+        LOG_ERROR("非法登录");
+        response=js_r.dump();
+        return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select name from user_info where id=";
+    word=word+mysql->escape(userid)+";";
+    auto res=mysql->find(word);
+    if(res==nullptr){
+        js_r["success"]=0;
+        js_r["message"]="数据库出现问题，无姓名";
+        LOG_ERROR("数据库出现问题，无姓名");
+        response=js_r.dump();
+        return response;
+    }
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+    std::string name=row[0];
+    std::string bookname=js["bname"];
+    std::string desc=js["desc"];
+    word="select bname from book where bname=";
+    word=word+"'"+mysql->escape(bookname)+"' and id="+mysql->escape(userid)+";";
+    std::cout<<word<<std::endl;
+    res=mysql->find(word);
+    row=mysql_fetch_row(res.get());
+    if(row!=nullptr){
+        js_r["success"]=0;
+        js_r["message"]="无法创建重复书籍";
+        response=js_r.dump();
+        return response;
+    }
+    word="insert into book(bname,another,description,id) value(";
+    word=word+"'"+mysql->escape(bookname)+"','"+mysql->escape(name)+"','"+mysql->escape(desc)+"',"+mysql->escape(userid)+");";
+    if(mysql->insert(word)){
+        js_r["success"]=1;
+        int bid=mysql_insert_id(mysql->outinit());
+        js_r["bid"]=std::to_string(bid);
+        js_r["message"]="创建成功";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="创建失败";
+        response=js_r.dump();
+        return response;
+    }
+}
+createchapter.cpp
+#include "createchapter.h"
+#include <filesystem>
+#include <fstream>
+#include"ReadLog.h"
+createchapter::createchapter() {
+    setmethodname("uploadchapter");
+}
+
+std::string createchapter::send() {
+    json js_r;
+    json js = json::parse(message_);
+
+  
+    std::string username = js.value("username", "");
+    std::string book_id  = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string title    = js.value("title", "无标题");
+    std::string content  = js.value("content", "");
+
+    if (username.empty() || book_id.empty() || chapter_num.empty() || content.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+
+    std::string sql = "SELECT bid FROM book WHERE id=" + mysql->escape(username)  + " AND bid=" +mysql->escape(book_id) ;
+    auto res = mysql->find(sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询书籍失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row = mysql_fetch_row(res.get());
+    if (!row || !row[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "你没有该书的创作权";
+        return js_r.dump();
+    }
+
+ 
+    sql = "SELECT cid FROM chapter WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+    auto res2 = mysql->find(sql);
+    if (res2) {
+        MYSQL_ROW row2 = mysql_fetch_row(res2.get());
+        if (row2 && row2[0]) {
+            js_r["success"] = 0;
+            js_r["message"] = "该章节号已存在，请更换章节号";
+            return js_r.dump();
+        }
+    }
+
+
+    std::string dir = "../static/book/" + book_id;
+    std::filesystem::create_directories(dir);
+
+
+    std::string file_path = dir + "/" + chapter_num + ".txt";
+    std::ofstream ofs(file_path);
+    if (!ofs) {
+        js_r["success"] = 0;
+        js_r["message"] = "文件创建失败";
+        LOG_ERROR(file_path+"文件创建失败");
+        return js_r.dump();
+    }
+    ofs << content;
+    ofs.close();
+
+
+    std::string absolute_path = std::filesystem::absolute(file_path).string();
+
+  
+    sql = "INSERT INTO chapter (bid, cid, title, file_path, status) VALUES ("
+          +mysql->escape(book_id) + "," +mysql->escape(chapter_num) + ",'" +mysql->escape(title) + "','" + mysql->escape(absolute_path) + "', 0)";
+
+    if (mysql->insert(sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "上传成功，等待审核";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库插入失败";
+    }
+
+    return js_r.dump();
+}
+db.cpp
+#include"db.h"
+#include"ReadLog.h"
+MySql::MySql() {
+    mysql = mysql_init(nullptr);
+    if (!mysql) {
+        LOG_FATAL("mysql初始化失败");
+    }
+
+    std::cout<<"构造函数读取配置"<<std::endl;
+    std::string host = "localhost";
+    std::string user = "root";
+    std::string password = "";
+    std::string database = "readbook";
+    int port = 3306;
+
+    std::ifstream config("db.txt");
+    if (config.is_open()) {
+        std::string line;
+        while (std::getline(config, line)) {
+            size_t start = line.find_first_not_of(" \t\r\n");
+            if (start == std::string::npos) continue;
+            size_t end = line.find_last_not_of(" \t\r\n");
+            line = line.substr(start, end - start + 1);
+
+            // 跳过空行和注释
+            if (line.empty() || line[0] == '#') continue;
+
+            // 解析 key=value
+            size_t eq = line.find('=');
+            if (eq == std::string::npos) continue;
+
+            std::string key = line.substr(0, eq);
+            std::string value = line.substr(eq + 1);
+
+            if (key == "host") host = value;
+            else if (key == "user") user = value;
+            else if (key == "password") password = value;
+            else if (key == "database") database = value;
+            else if (key == "port") port = std::stoi(value);
+        }
+    } else {
+        LOG_WARN("db.txt 未找到，使用默认配置");
+    }
+
+    if (!mysql_real_connect(mysql, host.c_str(), user.c_str(), password.c_str(), database.c_str(), port, nullptr, 0)) {
+        LOG_FATAL("数据库连接失败: " + std::string(mysql_error(mysql)));
+    }
+    mysql_query(mysql, "SET NAMES utf8mb4");
+}
+MySql::~MySql(){
+    mysql_close(mysql);
+}
+bool MySql::insert(std::string word){
+if(word.empty()){
+    //std::cout<<"无插入语句\n";
+    LOG_WARN("无插入语句");
+    return false;
+}
+int n=mysql_query(mysql,word.c_str());
+if(n==0){
+    return true;
+}
+else{
+    //std::cout<<"插入失败"<<mysql_error(mysql)<<std::endl;
+    LOG_WARN(mysql_error(mysql));
+    return false;
+}
+}
+
+ std::shared_ptr<MYSQL_RES> MySql::find(std::string word){
+    if(word.empty()){
+    //std::cout<<"无插入语句\n";
+    LOG_WARN("无插入语句");
+    return nullptr;
+}
+int n=mysql_query(mysql,word.c_str());
+MYSQL_RES* res=mysql_store_result(mysql);
+if(n==0){
+    std::shared_ptr<MYSQL_RES>res_(res,[](MYSQL_RES* res){
+        mysql_free_result(res);
+    });
+    return res_;
+}
+else{
+    //std::cout<<"更新失败"<<std::endl;
+    LOG_WARN("更新失败");
+    return nullptr;
+}
+}
+
+bool MySql::update(std::string word){
+if(word.empty()){
+    //std::cout<<"\n";
+    LOG_WARN("无插入语句");
+    return false;
+}
+int n=mysql_query(mysql,word.c_str());
+if(n==0){
+    return true;
+}
+else{
+    LOG_WARN(mysql_error(mysql));
+    return false;
+}
+}
+
+std::string MySql::escape(const std::string& input){
+    if(input.empty())return "";
+    char* escape=new char[input.size()*2+1];
+    mysql_real_escape_string(mysql,escape,input.c_str(),input.size());
+    std::string result(escape);
+    delete[] escape;
+    return result;
+}
+
+bool MySql::isAlive(){
+    return mysql_ping(mysql)==0;
+}
+
+bool MySql::reconnection(){
+std::string host = "localhost";
+    std::string user = "root";
+    std::string password = "";
+    std::string database = "readbook";
+    int port = 3306;
+
+    std::ifstream config("db.txt");
+    if (config.is_open()) {
+        std::cout<<"读取文件配置"<<std::endl;
+        std::string line;
+        while (std::getline(config, line)) {
+            size_t start = line.find_first_not_of(" \t\r\n");
+            if (start == std::string::npos) continue;
+            size_t end = line.find_last_not_of(" \t\r\n");
+            line = line.substr(start, end - start + 1);
+
+           
+            if (line.empty() || line[0] == '#') continue;
+
+          
+            size_t eq = line.find('=');
+            if (eq == std::string::npos) continue;
+
+            std::string key = line.substr(0, eq);
+            std::string value = line.substr(eq + 1);
+
+            if (key == "host") host = value;
+            else if (key == "user") user = value;
+            else if (key == "password") password = value;
+            else if (key == "database") database = value;
+            else if (key == "port") port = std::stoi(value);
+        
+        }
+    } else {
+        LOG_WARN("db.txt 未找到，使用默认配置");
+    }
+    std::cout<<"开始连接"<<std::endl;
+    if (!mysql_real_connect(mysql, host.c_str(), user.c_str(), password.c_str(), database.c_str(), port, nullptr, 0)) {
+        LOG_ERROR("数据库连接失败: " + std::string(mysql_error(mysql)));
+        return false;
+    }
+    std::cout<<"成功：连接"<<std::endl;
+    mysql_query(mysql, "SET NAMES utf8mb4");
+    return true;
+}
+editchapter.cpp
+#include "editchapter.h"
+#include"ReadLog.h"
+editchapter::editchapter() {
+    setmethodname("editchapter");
+}
+
+std::string editchapter::send() {
+    json js_r;
+    json js = json::parse(message_);
+
+    // 1. 安全取值
+    std::string username = js.value("username", "");
+    std::string book_id  = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string new_title = js.value("title", "");
+    std::string new_content = js.value("content", "");
+
+    if (username.empty() || book_id.empty() || chapter_num.empty() || new_content.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        LOG_WARN("数据库繁忙");
+        return js_r.dump();
+    }
+
+    // 2. 校验书籍是否属于当前用户
+    std::string check_sql = "SELECT bid FROM book WHERE id=" + mysql->escape(username)  + " AND bid=" + mysql->escape(book_id) ;
+    auto res = mysql->find(check_sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询书籍失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row = mysql_fetch_row(res.get());
+    if (!row || !row[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "你没有该书的创作权";
+        return js_r.dump();
+    }
+
+    // 3. 查询该章节是否存在，并获取原文件路径
+    std::string get_sql = "SELECT file_path FROM chapter WHERE bid=" + mysql->escape(book_id)  + " AND cid=" + mysql->escape(chapter_num) ;
+    auto res2 = mysql->find(get_sql);
+    if (!res2) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询章节失败";
+        return js_r.dump();
+    }
+    MYSQL_ROW row2 = mysql_fetch_row(res2.get());
+    if (!row2 || !row2[0]) {
+        js_r["success"] = 0;
+        js_r["message"] = "该章节不存在";
+        return js_r.dump();
+    }
+    std::string file_path = row2[0];
+
+    // 4. 覆盖写入文件
+    std::ofstream ofs(file_path);
+    if (!ofs) {
+        js_r["success"] = 0;
+        js_r["message"] = "文件写入失败";
+        LOG_ERROR("文件写入失败");
+        return js_r.dump();
+    }
+    ofs << new_content;
+    ofs.close();
+
+    // 5. 更新数据库中的标题，并将状态重置为待审核（0）
+    std::string update_sql = "UPDATE chapter SET title='" + mysql->escape(new_title) + "', status=0 WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+    if (mysql->update(update_sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "修改成功，等待重新审核";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库更新失败";
+        LOG_ERROR("数据库更新失败");
+    }
+
+    return js_r.dump();
+}
+find.cpp
+#include"find.h"
+#include"ReadLog.h"
+find::find(){
+    setmethodname("find");
+}
+std::string find::send(){
+    std::string response;
+    json js_r;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+        //std::cout<<"进入if\n";
+    std::string idStr = js["username"];
+    //std::cout<<idStr<<std::endl;
+    LOG_ERROR(idStr);
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    std::cout<<"进入else\n";
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word;
+    word="select * from user_info where id=";
+    word=word+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    
+    js_r["success"]=1;
+    while(row=mysql_fetch_row(res.get())){
+        std::cout<<"成功"<<std::endl;
+        js_r["name"]=row[1];
+        js_r["sex"]=row[2];
+        js_r["intre"]=row[3];
+    }
+
+    word="select role from user_pos where id=";
+    word=word+mysql->escape(std::to_string(id))+";";
+    res=mysql->find(word);
+    std::cout<<word<<std::endl;
+    while(row=mysql_fetch_row(res.get())){
+        std::string role(row[0]);
+        if(role=="1"){
+            js_r["role"]="manger";
+        }
+        else if(role=="0"){
+            js_r["role"]="reader";
+        }
+    }
+
+    response=js_r.dump();
+    return response;
+}
+HttpServer.cpp
+#include "HttpServer.h"
+#include <iostream>
+#include <thread>
+#include <condition_variable>
+#include "web.h"
+#include "ReadLog.h"
+
+HttpServer::HttpServer()
+    : addr_(readfile()),
+      tcpserver_(&loop_, addr_, "httpserver"),
+      threadNum_(4)
+{
+    //tcpserver_.setReuseAddr(true);
+    tcpserver_.setConnectionCallback(
+        bind(&HttpServer::onConnection, this, std::placeholders::_1));
+    tcpserver_.setMessageCallback(
+        bind(&HttpServer::onMessage, this, std::placeholders::_1,
+             std::placeholders::_2, std::placeholders::_3));
+}
+
+// void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn){
+//     if(!conn->connected()){
+//         std::cout<<"__关闭"<<std::endl;
+//         conn->shutdown();
+//     }
+// }
+
+void HttpServer::onConnection(const muduo::net::TcpConnectionPtr& conn)
+{
+    if (!conn->connected())
+    {
+        //std::cout << "__关闭" << std::endl;
+        LOG_INFO(conn->name() + "关闭");
+        {
+            std::unique_lock<std::mutex> lock(mapReadMtx_);
+            connBuf_.erase(conn.get());
+        }
+        conn->shutdown();
+    }
+}
+
+// void HttpServer::onMessage(const muduo::net::TcpConnectionPtr& conn,
+//                             muduo::net::Buffer* buffer_,
+//                             muduo::Timestamp){
+//                                 std::string message=buffer_->retrieveAllAsString();
+//                                 std::cout<<message<<std::endl;
+//                                 web b;
+//                                 b.setmessage(message);
+//                                 b.setTcpPtr(conn);
+//                                 b.run();
+//                             }
+
+void HttpServer::onMessage(const muduo::net::TcpConnectionPtr& conn,
+                           muduo::net::Buffer* buf,
+                           muduo::Timestamp)
+{
+    LOG_INFO(conn->name() + "收到数据");
+
+    // 将新数据追加到对应连接的累积缓冲区，并在锁内循环提取完整请求
+    std::unique_lock<std::mutex> lock(mapReadMtx_);
+    std::string& allData = connBuf_[conn.get()];
+    allData += buf->retrieveAllAsString();
+
+    while (true)
+    {
+        // 检查是否收到完整的 HTTP 请求头（以 \r\n\r\n 结束）
+        size_t headerEnd = allData.find("\r\n\r\n");
+        if (headerEnd == std::string::npos)
+        {
+            break; // 头部还没收完，等待下一次数据
+        }
+
+        // 大小写无关地查找 Content-Length
+        size_t clPos = std::string::npos;
+        // 简单实现：将头部区域转为小写再查找
+        std::string headerPart = allData.substr(0, headerEnd);
+        for (auto& c : headerPart)
+            c = tolower(c);
+        std::string lowerCL = "content-length:";
+        size_t lowerPos = headerPart.find(lowerCL);
+        bool hasBody = (lowerPos != std::string::npos);
+        int contentLen = 0;
+
+        if (hasBody)
+        {
+            // 恢复到原始字符串中的实际位置
+            clPos = allData.find("Content-Length:");
+            if (clPos == std::string::npos)
+            {
+                // 也可能是混合大小写，重新搜索（简单起见，这里先用原始查找，若找不到则按小写位置换算）
+                // 实际项目中建议写一个不区分大小写的查找函数
+                clPos = lowerPos; // 因为大小写转换前的位置与转换后的位置相同
+            }
+            else
+            {
+                // 使用找到的精确位置
+            }
+            // 统一使用 clPos（指向 "Content-Length:" 的开始）
+            clPos += 15; // "Content-Length:" 长度
+            size_t clEnd = allData.find("\r\n", clPos);
+            if (clEnd == std::string::npos)
+            {
+                conn->shutdown();
+                return;
+            }
+
+            try
+            {
+                contentLen = std::stoi(allData.substr(clPos, clEnd - clPos));
+            }
+            catch (const std::invalid_argument&)
+            {
+                LOG_WARN("非法的 Content-Length 值（非数字）");
+                conn->shutdown();
+                return;
+            }
+            catch (const std::out_of_range&)
+            {
+                LOG_WARN("Content-Length 值过大，超出 int 范围");
+                conn->shutdown();
+                return;
+            }
+
+            if (contentLen < 0)
+            {
+                LOG_ERROR("Content-Length 为负数");
+                conn->shutdown();
+                return;
+            }
+        }
+
+        size_t totalLen = headerEnd + 4 + contentLen;
+        if (allData.size() < totalLen)
+        {
+            break; // 请求体还没收全，等待下次数据
+        }
+
+        // 提取一个完整的请求报文（拷贝）
+        std::string fullRequest = allData.substr(0, totalLen);
+        allData.erase(0, totalLen); // 直接从原缓冲区删除
+
+        // 解锁后交给 web 模块处理（避免长时间持锁）
+        lock.unlock();
+        LOG_INFO(fullRequest);
+        web b;
+        b.setmessage(fullRequest);
+        b.setTcpPtr(conn);
+        b.run();
+        lock.lock(); // 重新加锁，继续检查剩余数据
+    }
+    // 循环结束后，剩余未处理的数据仍然保留在 connBuf_ 中，等待下次 onMessage
+}
+
+muduo::net::InetAddress HttpServer::readfile()
+{
+    //std::cout<<"开始"<<std::endl;
+    FILE* f = fopen("net.txt", "r");
+    if (f == nullptr)
+    {
+        //std::cout<<__FILE__<<":"<<__LINE__<<"出现错误,"<<f<<"文件无法打开"<<strerror(errno)<<std::endl;
+        LOG_ERROR("net.txt打开失败");
+        exit(EXIT_FAILURE);
+    }
+    while (!feof(f))
+    {
+        char buf[1024];
+        fgets(buf, 1024, f);
+        std::string buf_(buf);
+        int n = buf_.find_first_not_of(" ");
+        buf_ = buf_.substr(n);
+        n = buf_.find_last_not_of("\n");
+        buf_ = buf_.substr(0, n + 1);
+        n = buf_.find_last_not_of(" ");
+        buf_ = buf_.substr(0, n + 1);
+        n = buf_.find('=');
+        if (n == std::string::npos)
+        {
+            //std::cout<<__FILE__<<":"<<__LINE__<<"行："<<f<<"文本格式出现问题"<<std::endl;
+            LOG_ERROR("文本格式出现问题");
+            exit(EXIT_FAILURE);
+        }
+        std::string key = buf_.substr(0, n);
+        std::string value = buf_.substr(n + 1);
+        if (key == "ip")
+        {
+            ip = value;
+        }
+        else if (key == "port")
+        {
+            port = atoi(value.c_str());
+        }
+    }
+    fclose(f); // 修复：关闭文件
+    std::cout << ip << " " << port << std::endl;
+    return muduo::net::InetAddress(ip, port);
+}
+
+void HttpServer::run()
+{
+    tcpserver_.setThreadNum(4);
+    tcpserver_.start();
+    for (int i = 0; i < threadNum_; i++)
+    {
+        std::thread t(&HttpServer::handlequeue, this);
+        t.detach();
+    }
+    loop_.loop();
+}
+
+void HttpServer::handlequeue()
+{
+    while (1)
+    {
+        post_struct q = web_queue::instance().pop();
+        if (b_.count(q.method))
+        {
+            b_[q.method]->setConnection(q.ptr_);
+            b_[q.method]->setmessage(q.data);
+            std::string response = b_[q.method]->send();
+
+            response = web::setpost(response);
+            // q.ptr_->getLoop()->runInLoop([conn = q.ptr_, resp = response]() {
+            //     conn->send(resp);
+            //     });
+            q.ptr_->send(response);
+        }
+        else
+        {
+            q.ptr_->getLoop()->runInLoop([conn = q.ptr_]() {
+                conn->send(web::error());
+            });
+        }
+    }
+}
+
+std::unordered_map<std::string, muduo::net::TcpConnectionPtr> HttpServer::IdOfConn;
+std::mutex HttpServer::idOfConnMtx_;
+login.cpp
+#include"login.h"
+std::unordered_map<std::string,int>login::users;
+std::mutex login::login_mutex;
+main.cpp
+#include "HttpServer.h"
+#include"zhuche.h"
+#include"login.h"
+#include"find.h"
+#include"rname.h"
+#include"rpassword.h"
+#include"booklist.h"
+#include"chapterlist.h"
+#include"readchapter.h"
+#include"bookinfo.h"
+#include"createbook.h"
+#include"updateEdit.h"
+#include"createchapter.h"
+#include"editchapter.h"
+#include "reviewlist.h"
+#include "review.h"
+int main() {
+    HttpServer server_;
+
+    // 注册业务模块（在服务器启动之前）
+    auto loginBridge=std::make_shared<login>();
+    auto zhucheRridge=std::make_shared<zhuche>();
+    auto findRridge=std::make_shared<find>();
+    auto rnameRridge=std::make_shared<rname>();
+    auto rpasswordRridge=std::shared_ptr<rpassword>(new rpassword());
+    auto booklistBridge=std::shared_ptr<booklist>(new booklist());
+    auto chapterlistBridge=std::shared_ptr<chapterlist>(new chapterlist());
+    auto readchaperBrdge=std::shared_ptr<readchapter>(new readchapter());
+    auto bookinfoBridge=std::shared_ptr<bookinfo>(new bookinfo());
+    auto createbookBridge=std::shared_ptr<createbook>(new createbook());
+    auto updateEditBridge=std::shared_ptr<updateEdit>(new updateEdit());
+    auto createchapterBridge=std::shared_ptr<createchapter>(new createchapter());
+    auto editChapterBridge = std::make_shared<editchapter>();
+    auto reviewlistBridge = std::make_shared<reviewlist>();
+auto reviewBridge = std::make_shared<review>();
+server_.setbridge(reviewlistBridge);
+server_.setbridge(reviewBridge);
+    server_.setbridge(editChapterBridge);
+    server_.setbridge(findRridge);
+    server_.setbridge(zhucheRridge);
+    server_.setbridge(loginBridge);
+    server_.setbridge(rnameRridge);
+    server_.setbridge(rpasswordRridge);
+    server_.setbridge(booklistBridge);
+    server_.setbridge(chapterlistBridge);
+    server_.setbridge(readchaperBrdge);
+    server_.setbridge(bookinfoBridge);
+    server_.setbridge(createbookBridge);
+    server_.setbridge(updateEditBridge);
+    server_.setbridge(createchapterBridge);
+    // auto loginBridge = std::make_shared<LoginBridge>();
+    // server_.setbridge(loginBridge);
+    server_.setThreadsize(8);
+    server_.run();
+    return 0;
+}
+mysqlpool.cpp
+#include"mysqlpool.h"
+#include"ReadLog.h"
+std::atomic_bool mysql_pool=false;
+mysqlPool& mysqlPool::instance(){
+static mysqlPool pool_;
+return pool_;
+}
+mysqlPool::mysqlPool(){
+    maxnum_=1024;
+    minnum_=4;
+    num_=4;
+    for(int i=0;i<num_;i++){
+        MySql* mysql=new MySql();
+        mysql->settime();
+        q.push(mysql);
+    }
+    std::thread t1(&mysqlPool::destory,this);
+    t1.detach();
+}
+
+std::shared_ptr<MySql> mysqlPool::pop(){
+    MySql* front_mysql;
+    {
+        std::unique_lock<std::mutex>lock(mtx_);
+        if(q.empty()){
+        if(num_<maxnum_){
+            MySql* mysql=new MySql();
+            mysql->settime();
+            q.push(mysql);
+            num_++;
+        }
+        else{
+            //std::cout<<"以及到达上限"<<std::endl;
+            LOG_WARN("连接池已经到达上限");
+            return nullptr;
+        }
+    }
+     front_mysql=q.front();
+     q.pop();
+    }
+    
+
+    if(!front_mysql->isAlive()){
+            front_mysql->reconnection();
+            {
+                std::unique_lock<std::mutex>lock(mtx_);
+                q.push(front_mysql);
+            }
+            return pop();
+    }
+
+    // if (!front_mysql->isAlive()) {
+    //         delete front_mysql;
+    //         {
+    //             std::unique_lock<std::mutex> lock(mtx_);
+    //             std::cout<<"数据库连接为空\n";
+    //             num_--;
+    //         }
+    //         //std::this_thread::sleep_for(std::chrono::milliseconds(500));           
+    //     }
+    return std::shared_ptr<MySql>(front_mysql,[this](MySql* q){
+        if(mysql_pool){
+            delete q;
+            q=nullptr;
+        }
+        else{
+        q->settime();
+        {
+            std::unique_lock<std::mutex>lock(this->mtx_);
+            this->q.push(q);
+        }
+        this->cond_.notify_one();
+        }
+    });
+} 
+
+void mysqlPool::destory(){
+    while(1){
+        std::unique_lock<std::mutex>lock(mtx_);
+        while(num_<=minnum_&&!mysql_pool){
+            cond_.wait(lock);
+        }
+        if (mysql_pool) break;
+        if(!q.empty()&&q.front()->gettime()>=300){
+            delete q.front();
+            q.front()=nullptr;
+            q.pop();
+                num_--;
+        }
+    }
+}
+mysqlPool::~mysqlPool(){
+    mysql_pool=true;
+    cond_.notify_all();        
+    std::lock_guard<std::mutex> lock(mtx_);
+    while(!q.empty()){
+         delete q.front();
+            q.front()=nullptr;
+            q.pop();
+            num_--;
+    }
+}
+readchapter.cpp
+#include"readchapter.h"
+readchapter::readchapter(){
+    setmethodname("readchapter");
+}
+std::string readchapter::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    if(js["book_id"].is_null()||js["chapter_id"].is_null()){
+        return R"({"success":0,"message":"参数缺失"})";
+    }
+    std::string bid = js.value("book_id", "");  
+    std::string cid = js.value("chapter_id", "");
+    
+   if (bid.empty() || cid.empty()) {
+    return R"({"success":0,"message":"参数缺失"})";
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="select file_path from chapter where bid=";
+    word=word+mysql->escape(bid) +" and cid="+ mysql->escape(cid)+";";
+    auto res=mysql->find(word);
+    MYSQL_ROW row;
+    row=mysql_fetch_row(res.get());
+    if (!row) {
+    return R"({"success":0,"message":"章节不存在"})";
+}
+    std::string path=std::string(row[0]);
+    std::ifstream f(path);
+    if (!std::filesystem::is_regular_file(path)) {//判断是不是普通文件
+    js_r["success"] = 0;
+    js_r["message"] = "文件无效或不存在";
+    response = js_r.dump();
+    return response;
+}
+    if(!f){
+        js_r["success"]=0;
+        response=js_r.dump();
+        return response; 
+    }
+    std::string content{std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>()};//一次性读完
+    js_r["success"]=1;
+    js_r["content"]=content;
+    response=js_r.dump();
+    return response;
+}
+review.cpp
+#include "review.h"
+
+review::review() {
+    setmethodname("review");
+}
+
+std::string review::send() {
+    json js_r;
+    json js = json::parse(message_);
+    std::string userid = js.value("userid", "");
+    std::string book_id = js.value("book_id", "");
+    std::string chapter_num = js.value("chapter_num", "");
+    std::string action = js.value("action", "");
+
+    if (userid.empty() || book_id.empty() || chapter_num.empty() || action.empty()) {
+        js_r["success"] = 0;
+        js_r["message"] = "参数缺失";
+        return js_r.dump();
+    }
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+   
+    std::string roleSql = "select role from user_pos where id=" + mysql->escape(userid) + ";";
+    auto roleRes = mysql->find(roleSql);
+    MYSQL_ROW roleRow = mysql_fetch_row(roleRes.get());
+    if (!roleRow || std::string(roleRow[0]) == "0") {
+        js_r["success"] = 0;
+        js_r["message"] = "无审核权限";
+        return js_r.dump();
+    }
+
+    int new_status = (action == "approve") ? 1 : 2;
+    std::string sql = "UPDATE chapter SET status=" + mysql->escape(std::to_string(new_status)) +
+                      " WHERE bid=" + mysql->escape(book_id) + " AND cid=" + mysql->escape(chapter_num);
+
+    if (mysql->update(sql)) {
+        js_r["success"] = 1;
+        js_r["message"] = "审核完成";
+    } else {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库更新失败";
+    }
+    return js_r.dump();
+}
+reviewlist.cpp
+#include "reviewlist.h"
+reviewlist::reviewlist() {
+    setmethodname("reviewlist");
+}
+
+std::string reviewlist::send() {
+    json js_r;
+    json js = json::parse(message_);
+    std::string userid = js.value("userid", "");
+
+    auto mysql = mysqlPool::instance().pop();
+    if (!mysql) {
+        js_r["success"] = 0;
+        js_r["message"] = "数据库繁忙";
+        return js_r.dump();
+    }
+
+    // 权限校验
+    std::string roleSql = "select role from user_pos where id=" + mysql->escape(userid) + ";";
+    auto roleRes = mysql->find(roleSql);
+    MYSQL_ROW roleRow = mysql_fetch_row(roleRes.get());
+    if (!roleRow || std::string(roleRow[0]) == "0") {
+        js_r["success"] = 0;
+        js_r["message"] = "无审核权限";
+        return js_r.dump();
+    }
+
+    // 查询所有 status=0 的章节
+    std::string sql = "SELECT c.bid, c.cid, c.title, c.status, b.bname "
+                      "FROM chapter c JOIN book b ON c.bid = b.bid "
+                      "WHERE c.status = 0 ORDER BY c.bid, c.cid";
+    auto res = mysql->find(sql);
+    if (!res) {
+        js_r["success"] = 0;
+        js_r["message"] = "查询失败";
+        return js_r.dump();
+    }
+
+    js_r["chapters"] = json::array();
+    MYSQL_ROW chRow;
+    while ((chRow = mysql_fetch_row(res.get()))) {
+        json ch;
+        ch["book_id"] = chRow[0];
+        ch["chapter_num"] = chRow[1];
+        ch["title"] = chRow[2] ? chRow[2] : "";
+        ch["book_name"] = chRow[4] ? chRow[4] : "";
+        js_r["chapters"].push_back(ch);
+    }
+    js_r["success"] = 1;
+    return js_r.dump();
+}
+rname.cpp
+#include"rname.h"
+rname::rname(){
+    setmethodname("rname");
+}
+
+std::string rname::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+    std::string idStr = js["username"];
+    std::cout<<idStr<<std::endl;
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string name=js["name"];
+    std::string sex=js["sex"];
+    std::string intre=js["intre"];
+    std::string word="update user_info set name='";
+    word=word+mysql->escape(name)+"',sex='"+mysql->escape(sex)+"',intro='"+mysql->escape(intre)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    
+    mysql->update(word);
+    word="update book set another='";
+    word=word+mysql->escape(name)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    mysql->update(word);
+    js_r["success"]=1;
+    js_r["message"]="修改成功";
+    response=js_r.dump();
+    return response;
+}
+rpassword.cpp
+#include"rpassword.h"
+#include"addSave.h"
+rpassword::rpassword(){
+    setmethodname("rpassword");
+}
+std::string rpassword::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    int id;
+    if(!js["username"].is_null()){
+    std::string idStr = js["username"];
+    std::cout<<idStr<<std::endl;
+    id = std::atoi(idStr.c_str());
+    std::cout<<id<<std::endl;
+    }
+    else{
+    js_r["success"]=0;
+    js_r["message"]="账号为空";
+    response=js_r.dump();
+    return response;
+    }
+    auto mysql=mysqlPool::instance().pop();
+    std::string password=js["password"];
+    std::string salt = "readbook_2026.6.18";   
+    std::string hashed = sha256(salt + password); 
+    std::string word="update users set password='";
+    word=word+mysql->escape(hashed)+"' where id="+mysql->escape(std::to_string(id))+";";
+    std::cout<<word<<std::endl;
+    
+    mysql->update(word);
+    js_r["success"]=1;
+    js_r["message"]="密码修改成功";
+    response=js_r.dump();
+    return response;
+}
+updateEdit.cpp
+#include"updateEdit.h"
+updateEdit::updateEdit(){
+    setmethodname("updateEdit");
+}
+std::string updateEdit::send(){
+    json js_r;
+    std::string response;
+    json js=json::parse(message_);
+    auto mysql=mysqlPool::instance().pop();
+    std::string id;
+    if(js["username"].is_null()){
+        js["success"]=0;
+        js["message"]="未登录";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        id=js["username"];
+    }
+    std::string bid=js["bid"];
+    std::string bname=js["bname"];
+    std::string edit=js["edit"];
+    std::string word="select id from book where bid=";
+    word=word+mysql->escape(bid)+" and bname='"+mysql->escape(bname)+"';";
+    auto res=mysql->find(word);
+    if(res==nullptr){
+        js_r["success"]=0;
+        js_r["message"]="无效字段";
+        response=js_r.dump();
+        return response;
+    }
+    MYSQL_ROW row=mysql_fetch_row(res.get());
+     if(!row||row[0]==NULL){
+        js_r["success"]=0;
+        js_r["message"]="没有这本书或者不是该书作者";
+        response=js_r.dump();
+        return response;
+    }
+    std::string true_id=row[0];
+
+    if(true_id!=id){
+        js_r["success"]=0;
+        js_r["message"]="你不是该书作者，无法更改";
+        response=js_r.dump();
+        return response;
+    }
+    word="update book set description='";
+    word=word+mysql->escape(edit)+"' where bid="+mysql->escape(bid)+";";
+    if(mysql->update(word)){
+        js_r["success"]=1;
+        js_r["message"]="修改成功";
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        js_r["success"]=0;
+        js_r["message"]="更新失败";
+        response=js_r.dump();
+        return response;
+    }
+}
+web.cpp
+#include "web.h"
+#include "HttpServer.h"
+#include <fstream>      // std::ifstream
+#include <iterator>     // std::istreambuf_iterator
+#include"ReadLog.h"
+web::web() {
+    web_function.insert({"POST", [this](std::string resource) {
+        dealpost(resource);
+    }});
+    web_function.insert({"GET", [this](std::string resource) {
+        dealget(resource);
+    }});
+    web_function.insert({"OPTIONS", [this](std::string resource) {
+        dealoptions(resource);
+    }});
+    r_style.insert({ResponseStyle::text, "Content-Type: text/plain; charset=utf-8"});
+    r_style.insert({ResponseStyle::json, "Content-Type: application/json; charset=utf-8"});
+    r_style.insert({ResponseStyle::file, "Content-Type: text/html; charset=utf-8"});
+    r_style.insert({ResponseStyle::video, "Content-Type: video/mp4"});
+    r_style.insert({ResponseStyle::audio, "Content-Type: audio/mpeg"});
+
+    s_style.insert({"html", ResponseStyle::file});
+    s_style.insert({"txt", ResponseStyle::text});
+    s_style.insert({"json", ResponseStyle::json});
+}
+
+void web::run() {
+    // ====== 原有代码，完全不变 ======
+    std::string temp_message = message;
+    if (message.empty()) {
+        //std::cout << "无事件处理，请设置事件" << " " << __FILE__ << " " << __LINE__ << std::endl;
+        LOG_ERROR("无事件处理");
+        return;
+    }
+    int n = message.find_first_not_of(" ");
+    if (n == std::string::npos) {
+       // std::cout << "格式错误" << " " << __FILE__ << " " << __LINE__ << std::endl;
+       LOG_ERROR(message+"格式错误");
+    }
+    int m = message.find(" ");
+    std::string response = message.substr(n, m - n);
+    if (web_function.count(response)) {
+        std::function<void(std::string)> responseBack = web_function[response];
+        temp_message = temp_message.substr(m + 1);
+        m = temp_message.find(" ");
+        std::string source = temp_message.substr(0, m);
+        responseBack(source);
+    }
+}
+
+void web::dealget(std::string source) {
+    // 防止路径遍历攻击
+    if (source.find("..") != std::string::npos) {
+        ptr_->send(error());
+        return;
+    }
+
+    // 去掉 URL 中的查询参数（如 ?name=xxx&id=1）
+    size_t q_pos = source.find('?');
+    if (q_pos != std::string::npos) {
+        source = source.substr(0, q_pos);
+    }
+
+    // 构建文件路径
+    std::string root = "../static";
+    root += source;
+
+    // 以二进制方式打开文件（RAII，自动管理资源）
+    std::ifstream file(root, std::ios::binary);
+    if (!file.is_open()) {
+        ptr_->send(error());
+        return;
+    }
+
+    // 获取文件扩展名
+    size_t dot_pos = source.find_last_of('.');
+    if (dot_pos == std::string::npos) {
+        ptr_->send(error());
+        return;
+    }
+    std::string ext = source.substr(dot_pos + 1);
+
+    // 安全地读取整个文件内容到字符串
+    std::string content;
+    try {
+        // 使用 istreambuf_iterator 一次性读取全部内容
+        content.assign(std::istreambuf_iterator<char>(file),
+                       std::istreambuf_iterator<char>());
+    } catch (const std::exception& e) {
+        // 读取异常（例如文件过大、内存不足）时返回 404
+        LOG_ERROR("文件过大");
+        ptr_->send(error());
+        return;
+    }
+
+    if (file.bad()) {   // 检查流状态
+        ptr_->send(error());
+        return;
+    }
+
+    // 构建 HTTP 响应头
+    std::string temp_r = "HTTP/1.1 200 OK\r\n";
+    // 查找对应 MIME 类型，如果找不到则使用通用二进制类型
+    auto it = s_style.find(ext);
+    if (it != s_style.end()) {
+        temp_r += r_style[it->second] + "\r\n";   // r_style 里已包含 "Content-Type: ..."
+    } else {
+        temp_r += "Content-Type: application/octet-stream\r\n";
+    }
+    temp_r += "Content-Length: " + std::to_string(content.size()) + "\r\n";
+    temp_r += "\r\n";                // 头部和身体的分隔空行
+    temp_r += content;              // 响应体
+
+    ptr_->send(temp_r);
+}
+
+void web::dealpost(std::string source) {
+
+    if (source.empty()) return;
+    if (source[0] == '/') source.erase(source.begin());
+
+    // 1. 找到头部结束位置（第一个 \r\n\r\n）
+    size_t header_end = message.find("\r\n\r\n");
+    if (header_end == std::string::npos) return;
+
+    // 2. 解析 Content-Length 头部
+    size_t cl_pos = message.find("Content-Length:");
+    if (cl_pos == std::string::npos || cl_pos > header_end) return;   // 没有 Content-Length，放弃
+    cl_pos += 15;  // "Content-Length:" 长度
+    size_t cl_end = message.find("\r\n", cl_pos);
+    std::string cl_str = message.substr(cl_pos, cl_end - cl_pos);
+    int content_length = std::stoi(cl_str);
+
+    // 3. 检查 body 是否已完整接收
+    size_t body_start = header_end + 4;
+    if (message.size() < body_start + content_length) {
+        return;   // 数据还没收全，等下次 onMessage 再处理
+    }
+
+    // 4. 精确截取 body
+    std::string temp_message_data = message.substr(body_start, content_length);
+
+    //std::cout << "开始储存" << std::endl;
+   // HttpServer::IdOfConn.insert({temp_message_data, ptr_});
+    web_queue::instance().push({source, temp_message_data, ptr_});
+}
+
+void web::dealoptions(std::string source) {
+    std::string response = "HTTP/1.1 204 No Content\r\n";
+    response += "Access-Control-Allow-Origin: *\r\n";
+    response += "Access-Control-Allow-Methods:GET,POST,OPTIONS\r\n";
+    response += "Access-Control-Allow-Headers: Content-Type\r\n";
+    response += "\r\n";
+    ptr_->send(response);
+}
+
+std::string web::setpost(std::string mess) {
+    std::string resp;
+    resp += "HTTP/1.1 200 OK\r\n";
+    resp += "Content-Type: application/json; charset=utf-8\r\n";
+    resp += "Access-Control-Allow-Origin: *\r\n";
+    resp += "Content-Length: " + std::to_string(mess.size()) + "\r\n";
+    resp += "\r\n";
+    resp += mess;
+    return resp;
+}
+
+std::string web::error() {
+    std::string body = "404 Not Found";
+    std::string response = "HTTP/1.1 404 Not Found\r\n";
+    response += "Content-Type:text/html; charset=utf-8\r\n";
+    response += "Content-Length:" + std::to_string(body.size()) + "\r\n";
+    response += "\r\n";
+    response += body;
+    return response;
+}
+zhuche.cpp
+#include"zhuche.h"
+#include"addSave.h"
+#include"RateLimiter.h"
+zhuche::zhuche(){
+    setmethodname("zhuche");
+}
+std::string zhuche::send(){
+    std::string ip = getClientIP();  
+    if (!RateLimiter::instance().allow(ip, 3, 120)) {  
+        return R"({"success":0,"message":"注册太频繁，请稍后再试"})";
+    }
+    std::string response;
+    json js=json::parse(message_);
+    std::string password=js["password"];
+    std::string salt = "readbook_2026.6.18";   
+    std::string hashed = sha256(salt + password); 
+    auto mysql=mysqlPool::instance().pop();
+    std::string word="insert into users(password) value('";
+    word=word+mysql->escape(hashed)+"');";
+    if(mysql->insert(word)){
+    int id=mysql_insert_id(mysql->outinit());
+    std::string name=js["name"];
+    std::string intor=js["jieshao"];
+    std::string sex=js["sex"];
+    word="insert into user_info(id,name,sex,intro) value(";
+    word=word+mysql->escape(std::to_string(id))+",'"+mysql->escape(name)+"','"+mysql->escape(sex)+"','"+mysql->escape(intor)+"')";
+    if(mysql->insert(word)){
+
+        word="insert into user_pos(id,role) value(";
+        word=word+mysql->escape(std::to_string(id))+","+"0);";
+        if(!mysql->insert(word)){
+            json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+        }
+        json js_r;
+        js_r["success"]=1;
+        js_r["message"]="注册成功";
+        js_r["username"]=id;
+        response=js_r.dump();
+        return response;
+    }
+    else{
+        json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+    }
+    }
+    else{
+        json js_r;
+        js_r["success"]=0;
+        js_r["message"]="后端出现问题";
+        js_r["username"]="空";
+        response=js_r.dump();
+        return response;
+    }
+}
+
+
+6864 - TcpServer.cc:80
+20260622 06:17:34.936125Z 27062 INFO  TcpServer::newConnection [httpserver] - new connection [httpserver-192.168.221.131:8086#999] from 192.168.221.131:56868 - TcpServer.cc:80
+20260622 06:17:34.936189Z 27062 INFO  TcpServer::newConnection [httpserver] - new connection [httpserver-192.168.221.131:8086#1000] from 192.168.221.131:56872 - TcpServer.cc:80
+20260622 06:17:34.936243Z 27062 INFO  TcpServer::newConnection [httpserver] - new connection [httpserver-192.168.221.131:8086#1001] from 192.168.221.131:56886 - TcpServer.cc:80
+20260622 06:17:36.092622Z 27062 INFO  TcpServer::newConnection [httpserver] - new connection [httpserver-192.168.221.131:8086#1002] from 192.168.221.131:42576 - TcpServer.cc:80
+LeakSanitizer:DEADLYSIGNAL
+==27062==ERROR: LeakSanitizer: SEGV on unknown address (pc 0x617886f71dd9 bp 0x00000000009f sp 0x742c743dee00 T1)
+==27062==The signal is caused by a READ memory access.
+==27062==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+    #0 0x617886f71dd9 in muduo::CurrentThread::tid() /home/sang/桌面/新建文件夹/muduo-master/muduo/base/CurrentThread.h:24
+    #1 0x617886f71dd9 in muduo::net::EventLoop::isInLoopThread() const /home/sang/桌面/新建文件夹/muduo-master/muduo/net/EventLoop.h:116
+    #2 0x617886f71dd9 in muduo::net::EventLoop::assertInLoopThread() /home/sang/桌面/新建文件夹/muduo-master/muduo/net/EventLoop.h:111
+    #3 0x617886f71dd9 in muduo::net::TcpConnection::sendInLoop(void const*, unsigned long) /home/sang/桌面/新建文件夹/muduo-master/muduo/net/TcpConnection.cc:141
+    #4 0x617886f73c45 in void std::__invoke_impl<void, void (muduo::net::TcpConnection::*&)(muduo::StringPiece const&), muduo::net::TcpConnection*&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(std::__invoke_memfun_deref, void (muduo::net::TcpConnection::*&)(muduo::StringPiece const&), muduo::net::TcpConnection*&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) /usr/include/c++/13/bits/invoke.h:74
+    #5 0x617886f73c45 in std::__invoke_result<void (muduo::net::TcpConnection::*&)(muduo::StringPiece const&), muduo::net::TcpConnection*&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>::type std::__invoke<void (muduo::net::TcpConnection::*&)(muduo::StringPiece const&), muduo::net::TcpConnection*&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&>(void (muduo::net::TcpConnection::*&)(muduo::StringPiece const&), muduo::net::TcpConnection*&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) /usr/include/c++/13/bits/invoke.h:96
+    #6 0x617886f73c45 in void std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>::__call<void, , 0ul, 1ul>(std::tuple<>&&, std::_Index_tuple<0ul, 1ul>) /usr/include/c++/13/functional:506
+    #7 0x617886f73c45 in void std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>::operator()<, void>() /usr/include/c++/13/functional:591
+    #8 0x617886f73c45 in void std::__invoke_impl<void, std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>&>(std::__invoke_other, std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>&) /usr/include/c++/13/bits/invoke.h:61
+    #9 0x617886f73c45 in std::enable_if<std::is_void<void>::value, void>::type std::__invoke_r<void, std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>&>(std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)>&) /usr/include/c++/13/bits/invoke.h:150
+    #10 0x617886f73c45 in std::_Function_handler<void (), std::_Bind<void (muduo::net::TcpConnection::*(muduo::net::TcpConnection*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >))(muduo::StringPiece const&)> >::_M_invoke(std::_Any_data const&) /usr/include/c++/13/bits/std_function.h:290
+    #11 0x617886f6ade0 in std::function<void ()>::operator()() const /usr/include/c++/13/bits/std_function.h:591
+    #12 0x617886f6ade0 in muduo::net::EventLoop::doPendingFunctors() /home/sang/桌面/新建文件夹/muduo-master/muduo/net/EventLoop.cc:266
+    #13 0x617886f6affc in muduo::net::EventLoop::loop() /home/sang/桌面/新建文件夹/muduo-master/muduo/net/EventLoop.cc:129
+    #14 0x617886f7bf0e in muduo::net::EventLoopThread::threadFunc() /home/sang/桌面/新建文件夹/muduo-master/muduo/net/EventLoopThread.cc:72
+    #15 0x617886f7f2f1 in std::function<void ()>::operator()() const /usr/include/c++/13/bits/std_function.h:591
+    #16 0x617886f7f2f1 in muduo::detail::ThreadData::runInThread() /home/sang/桌面/新建文件夹/muduo-master/muduo/base/Thread.cc:81
+    #17 0x617886f7ec0c in muduo::detail::startThread(void*) /home/sang/桌面/新建文件夹/muduo-master/muduo/base/Thread.cc:111
+    #18 0x742c77615587 in ThreadStartFunc<false> ../../../../src/libsanitizer/lsan/lsan_interceptors.cpp:434
+    #19 0x742c7609caa3 in start_thread nptl/pthread_create.c:447
+    #20 0x742c76129c6b in clone3 ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+LeakSanitizer can not provide additional info.
+SUMMARY: LeakSanitizer: SEGV /home/sang/桌面/新建文件夹/muduo-master/muduo/base/CurrentThread.h:24 in muduo::CurrentThread::tid()
+==27062==ABORTING

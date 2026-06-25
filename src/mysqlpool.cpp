@@ -19,8 +19,10 @@ mysqlPool::mysqlPool(){
 }
 
 std::shared_ptr<MySql> mysqlPool::pop(){
-    std::unique_lock<std::mutex>lock(mtx_);
-    if(q.empty()){
+    MySql* front_mysql;
+    {
+        std::unique_lock<std::mutex>lock(mtx_);
+        if(q.empty()){
         if(num_<maxnum_){
             MySql* mysql=new MySql();
             mysql->settime();
@@ -33,7 +35,41 @@ std::shared_ptr<MySql> mysqlPool::pop(){
             return nullptr;
         }
     }
-    std::shared_ptr<MySql>s_p(q.front(),[this](MySql* q){
+     front_mysql=q.front();
+     q.pop();
+    }
+    
+
+    if(!front_mysql->isAlive()){
+            if( front_mysql->reconnection()){
+            {
+                std::unique_lock<std::mutex>lock(mtx_);
+                q.push(front_mysql);
+            }
+            return pop();
+        }
+        else{
+            delete front_mysql;
+
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            num_--;
+        }
+
+        return nullptr;
+        }
+    }
+
+    // if (!front_mysql->isAlive()) {
+    //         delete front_mysql;
+    //         {
+    //             std::unique_lock<std::mutex> lock(mtx_);
+    //             std::cout<<"数据库连接为空\n";
+    //             num_--;
+    //         }
+    //         //std::this_thread::sleep_for(std::chrono::milliseconds(500));           
+    //     }
+    return std::shared_ptr<MySql>(front_mysql,[this](MySql* q){
         if(mysql_pool){
             delete q;
             q=nullptr;
@@ -47,8 +83,6 @@ std::shared_ptr<MySql> mysqlPool::pop(){
         this->cond_.notify_one();
         }
     });
-    q.pop();
-    return s_p;
 } 
 
 void mysqlPool::destory(){
@@ -62,7 +96,7 @@ void mysqlPool::destory(){
             delete q.front();
             q.front()=nullptr;
             q.pop();
-            num_--;
+                num_--;
         }
     }
 }

@@ -4,5 +4,5 @@
 class zhuche:public bridge{
 public:
 zhuche();
-std::string send()override;
+std::string send(std::string message_)override;
 };

@@ -1,0 +1,72 @@
+1.再deelpost里面的send与套runinloop对比
+第一部分：静态文件压测（低并发）
+并发数 | 测试命令 | QPS | 平均延迟 | 最大延迟 | 成功率
+50 | wrk -t2 -c50 -d10s http://192.168.221.131:8086/menu.html | 5241.31 | 9.60ms | 51.79ms | 100%
+第二部分：静态文件压测（高并发）
+并发数 | 测试命令 | QPS | 平均延迟 | 最大延迟 | 成功率
+10000 | wrk -t2 -c10000 -d10s http://192.168.221.131:8086/menu.html（第1次） | 4866.71 | 1.66s | 2.00s | ~93%（timeout 3175）
+10000 | wrk -t2 -c10000 -d10s http://192.168.221.131:8086/menu.html（第2次） | 4969.14 | 1.65s | 2.00s | ~94%（timeout 2839）
+10000 | wrk -t2 -c10000 -d10s http://192.168.221.131:8086/menu.html（第3次） | 4974.47 | 1.65s | 1.98s | ~94%（timeout 2903）
+15000 | wrk -t2 -c15000 -d10s http://192.168.221.131:8086/menu.html（第1次） | 4588.24 | 935.19ms | 2.00s | ~42%（timeout 34289）
+15000 | wrk -t2 -c15000 -d10s http://192.168.221.131:8086/menu.html（第2次） | 4571.45 | 916.06ms | 2.00s | ~73%（timeout 33961）
+15000 | wrk -t2 -c15000 -d10s http://192.168.221.131:8086/menu.html（第3次） | 4652.08 | 1.08s | 2.00s | ~64%（timeout 33678）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第1次） | 437.13 | 524.56ms | 935.34ms | 崩溃级（read 24097, write 129166）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第2次） | 2417.13 | 1.47s | 2.00s | ~91%（timeout 1011）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第3次） | 2365.53 | 1.49s | 2.00s | ~99%（timeout 157）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第4次） | 2242.20 | 1.16s | 2.00s | ~69%（timeout 6217）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第5次） | 1918.89 | 1.39s | 2.00s | ~94%（timeout 1189）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第6次） | 202.95 | 194.45ms | 444.04ms | 崩溃级（read 22435, write 132061）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第7次） | 2082.99 | 1.24s | 2.00s | ~66%（timeout 6729）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第8次） | 1875.67 | 1.04s | 2.00s | ~57%（timeout 8088）
+20000 | wrk -t2 -c20000 -d10s http://192.168.221.131:8086/menu.html（第9次） | 560.69 | 524.88ms | 1.13s | 崩溃级（read 23122, write 112983）
+更正二者本质上没有区别，send内部内置了runinloop唤醒线程，不会出现乱线程的情况，问题仍然再单机限制
+直接send
+20000 | wrk -t2 -c20000 -d10s（第10次） | 1372.05 | 1.06s | 2.00s | ~79%（timeout 2913）
+20000 | wrk -t2 -c20000 -d10s（第11次） | 1337.83 | 1.01s | 2.00s | ~79%（timeout 2930）
+20000 | wrk -t2 -c20000 -d10s（第12次） | 62.55 | 195.05ms | 260.88ms |（read 24097, write 102169）
+20000 | wrk -t2 -c20000 -d10s（第13次） | 1382.26 | 1.03s | 2.00s | ~76%（timeout 3338）
+20000 | wrk -t2 -c20000 -d10s（第14次） | 1322.87 | 988.31ms | 2.00s | ~77%（timeout 3061）
+20000 | wrk -t2 -c20000 -d10s（第15次） | 1416.30 | 1.02s | 2.00s | ~72%（timeout 3969）基本上崩溃
+runinloop:
+20000 | wrk -t2 -c20000 -d10s（第16次） | 1364.04 | 1.02s | 2.00s | ~76%（timeout 3323）
+20000 | wrk -t2 -c20000 -d10s（第17次） | 1346.60 | 1.02s | 2.00s | ~77%（timeout 3272）
+20000 | wrk -t2 -c20000 -d10s（第18次） | 1357.39 | 1.01s | 2.00s | ~75%（timeout 3436）
+20000 | wrk -t2 -c20000 -d10s（第19次） | 1281.78 | 1.02s | 2.00s | ~80%（timeout 2610）
+20000 | wrk -t2 -c20000 -d10s（第20次） | 255.24 | 304.58ms | 559.38ms | 崩溃级（read 24098, write 81147）
+10000
+send:（崩溃1）
+10000（第4次） | 4436.18 | 1.52s | 2.00s | 25571
+10000（第5次） | 4530.83 | 1.09s | 2.00s | 33546
+10000（第6次） | 4455.05 | 1.34s | 2.00s | 29375
+10000（第7次） | 4465.18 | 1.32s | 2.00s | 28415
+10000（第8次） | 4426.32 | 1.29s | 2.00s | 29194
+runinloop:(崩溃2)
+第1次 | 4527.24 | 1.36s | 2.00s | 29063 | 正常
+第2次 | 585.46 | 772.72ms | 1.47s | — | 崩溃（read 13991, write 389362）
+第3次 | 4507.78 | 1.35s | 2.00s | 29903 | 正常
+第4次 | 4541.96 | 1.32s | 2.00s | 29587 | 正常
+第5次 | 4446.39 | 1.02s | 1.58s | 33760 | 正常
+基本上没什么区别，因为send里面包含了runinloop所以线程不会乱掉，之前的说话错误
+
+
+2.数据库超时间连接问题？
+发现这个程序空跑一天后无法登录注册但是任然可以访问页面，猜测是数据库8小时自动断开机制
+20260622 02:53:50.156146Z 12517 ERROR Bad file descriptor (errno=9) TcpConnection::sendInLoop - TcpConnection.cc:167
+20260622 02:53:50.156172Z 12517 FATAL Bad file descriptor (errno=9) epoll_ctl op =MOD fd =30 - EPollPoller.cc:189
+20260622 02:53:50.156377Z 12513 INFO  TcpServer::newConnection [httpserver] - new connection [httpserver-192.168.221.131:8086#12] from 192.168.221.131:46336 - TcpServer.cc:80
+发现严重问题
+Thread 3 "httpserver1" received signal SIGABRT, Aborted.
+[Switching to Thread 0x7ffff3ffe6c0 (LWP 12517)]
+__pthread_kill_implementation (no_tid=0, signo=6, threadid=<optimized out>)
+    at ./nptl/pthread_kill.c:44
+warning: 44     ./nptl/pthread_kill.c: 没有那个文件或目录
+(gdb) bt
+#0  __pthread_kill_implementation (no_tid=0, signo=6, 
+    threadid=<optimized out>) at ./nptl/pthread_kill.c:44
+#1  __pthread_kill_internal (signo=6, threadid=<optimized out>)
+    at ./nptl/pthread_kill.c:78
+    infocomm哈希表与前面的
+
+    之前买下了大坑每一个bridge有一个共享message_导致多线程message_不统一，导致了一个非常严重的数据竞争，改为函数输入message_每一个线程
+    有独立的堆栈从而解决共享，但是连接为解决这个问题，后续引入jwn来解决这个问题。这是因为每一个线程都有独立的堆栈，我执行函数时，其实就是再那堆栈
+    地址储存的数据进行改变，每一个地址独立所以不冲突，而bridge里面的message_不独立所以冲突

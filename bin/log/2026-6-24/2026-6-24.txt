@@ -1,0 +1,466 @@
+INFO:[2026-6-24 0:0:9] httpserver-192.168.221.131:8086#15关闭
+INFO:[2026-6-24 0:0:16] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:16] GET /menu.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/login.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:16] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:16] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:0:18] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:18] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:19] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:19] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":3,"size":10}
+INFO:[2026-6-24 0:0:20] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:20] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:21] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:21] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:0:21] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:21] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:22] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:22] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":3,"size":10}
+INFO:[2026-6-24 0:0:23] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:23] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:24] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:24] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:0:24] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:24] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:24] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:24] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":3,"size":10}
+INFO:[2026-6-24 0:0:25] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:25] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:26] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:26] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:0:32] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:32] GET /person.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:32] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:32] GET /findrole.js HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: */*
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:32] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:32] POST /find HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 17
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"username":"18"}
+ERROR:[2026-6-24 0:0:32] 18
+INFO:[2026-6-24 0:0:33] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:33] GET /create.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:33] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:33] POST /mybook HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 17
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/create.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"username":"18"}
+INFO:[2026-6-24 0:0:41] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:41] POST /createbook HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 44
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/create.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"username":"18","bname":"www","desc":"111"}
+INFO:[2026-6-24 0:0:42] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:42] POST /mybook HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 17
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/create.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"username":"18"}
+INFO:[2026-6-24 0:0:43] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:43] GET /person.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/create.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:43] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:43] GET /findrole.js HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: */*
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:43] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:43] POST /find HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 17
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"username":"18"}
+ERROR:[2026-6-24 0:0:43] 18
+INFO:[2026-6-24 0:0:44] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:44] GET /menu.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:0:44] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:44] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:0:45] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:45] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:0:45] httpserver-192.168.221.131:8086#14收到数据
+INFO:[2026-6-24 0:0:45] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":3,"size":10}
+INFO:[2026-6-24 0:1:50] httpserver-192.168.221.131:8086#16关闭
+INFO:[2026-6-24 0:2:7] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:7] GET /menu.html HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://192.168.221.131:8086/person.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+INFO:[2026-6-24 0:2:7] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:7] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:2:8] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:8] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:2:9] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:9] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":3,"size":10}
+INFO:[2026-6-24 0:2:10] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:10] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":2,"size":10}
+INFO:[2026-6-24 0:2:11] httpserver-192.168.221.131:8086#1收到数据
+INFO:[2026-6-24 0:2:11] POST /booklist HTTP/1.1
+Host: 192.168.221.131:8086
+Connection: keep-alive
+Content-Length: 20
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0
+Content-Type: application/json
+Accept: */*
+Origin: http://192.168.221.131:8086
+Referer: http://192.168.221.131:8086/menu.html
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+{"page":1,"size":10}
+INFO:[2026-6-24 0:5:57] httpserver-192.168.221.131:8086#2关闭
+INFO:[2026-6-24 0:7:11] httpserver-192.168.221.131:8086#1关闭

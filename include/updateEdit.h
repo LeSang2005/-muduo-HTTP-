@@ -3,5 +3,5 @@
 class updateEdit: public bridge{
 public:
 updateEdit();
-std::string send();
+std::string send(std::string message_);
 };

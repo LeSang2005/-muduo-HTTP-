@@ -141,7 +141,7 @@ void web::dealpost(std::string source) {
     std::string temp_message_data = message.substr(body_start, content_length);
 
     //std::cout << "开始储存" << std::endl;
-    HttpServer::IdOfConn.insert({temp_message_data, ptr_});
+   // HttpServer::IdOfConn.insert({temp_message_data, ptr_});
     web_queue::instance().push({source, temp_message_data, ptr_});
 }
 

@@ -6,5 +6,5 @@
 class editchapter : public bridge {
 public:
     editchapter();
-    std::string send() override;
+    std::string send(std::string message_) override;
 };

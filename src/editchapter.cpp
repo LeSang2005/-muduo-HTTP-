@@ -4,7 +4,7 @@ editchapter::editchapter() {
     setmethodname("editchapter");
 }
 
-std::string editchapter::send() {
+std::string editchapter::send(std::string message_) {
     json js_r;
     json js = json::parse(message_);
 

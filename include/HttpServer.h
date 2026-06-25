@@ -52,6 +52,6 @@ muduo::net::TcpServer tcpserver_;
 std::unordered_map<std::string,std::shared_ptr<bridge>>b_;
 std::unordered_map<void*, std::string> connBuf_;  // 用裸指针作为key，存储每个连接的累积数据
 void handlequeue();
-
+std::mutex mapReadMtx_;
 int threadNum_;
 };

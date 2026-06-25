@@ -4,5 +4,5 @@
 class review : public bridge {
 public:
     review();
-    std::string send() override;
+    std::string send(std::string message_) override;
 };

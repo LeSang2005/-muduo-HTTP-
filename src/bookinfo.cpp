@@ -3,7 +3,7 @@ bookinfo::bookinfo(){
     setmethodname("bookinfo");
 }
 
-std::string bookinfo::send(){
+std::string bookinfo::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);

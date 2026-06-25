@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sang/桌面/http/include
 
-CXX_FLAGS = -g -O0 -std=gnu++17
+CXX_FLAGS = -g -O0 -std=gnu++17 -fsanitize=leak -fno-omit-frame-pointer
 

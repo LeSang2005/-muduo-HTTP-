@@ -111,10 +111,38 @@ CMakeFiles/httpserver.dir/src/booklist.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/booklist.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/booklist.cpp -o CMakeFiles/httpserver.dir/src/booklist.cpp.s
 
+CMakeFiles/httpserver.dir/src/bookreview.cpp.o: CMakeFiles/httpserver.dir/flags.make
+CMakeFiles/httpserver.dir/src/bookreview.cpp.o: /home/sang/桌面/http/src/bookreview.cpp
+CMakeFiles/httpserver.dir/src/bookreview.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/httpserver.dir/src/bookreview.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/bookreview.cpp.o -MF CMakeFiles/httpserver.dir/src/bookreview.cpp.o.d -o CMakeFiles/httpserver.dir/src/bookreview.cpp.o -c /home/sang/桌面/http/src/bookreview.cpp
+
+CMakeFiles/httpserver.dir/src/bookreview.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/httpserver.dir/src/bookreview.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sang/桌面/http/src/bookreview.cpp > CMakeFiles/httpserver.dir/src/bookreview.cpp.i
+
+CMakeFiles/httpserver.dir/src/bookreview.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/bookreview.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/bookreview.cpp -o CMakeFiles/httpserver.dir/src/bookreview.cpp.s
+
+CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o: CMakeFiles/httpserver.dir/flags.make
+CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o: /home/sang/桌面/http/src/bookreviewlist.cpp
+CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o -MF CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o.d -o CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o -c /home/sang/桌面/http/src/bookreviewlist.cpp
+
+CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sang/桌面/http/src/bookreviewlist.cpp > CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.i
+
+CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/bookreviewlist.cpp -o CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.s
+
 CMakeFiles/httpserver.dir/src/chapterlist.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/chapterlist.cpp.o: /home/sang/桌面/http/src/chapterlist.cpp
 CMakeFiles/httpserver.dir/src/chapterlist.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/httpserver.dir/src/chapterlist.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/httpserver.dir/src/chapterlist.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/chapterlist.cpp.o -MF CMakeFiles/httpserver.dir/src/chapterlist.cpp.o.d -o CMakeFiles/httpserver.dir/src/chapterlist.cpp.o -c /home/sang/桌面/http/src/chapterlist.cpp
 
 CMakeFiles/httpserver.dir/src/chapterlist.cpp.i: cmake_force
@@ -128,7 +156,7 @@ CMakeFiles/httpserver.dir/src/chapterlist.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/createbook.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/createbook.cpp.o: /home/sang/桌面/http/src/createbook.cpp
 CMakeFiles/httpserver.dir/src/createbook.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/httpserver.dir/src/createbook.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/httpserver.dir/src/createbook.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/createbook.cpp.o -MF CMakeFiles/httpserver.dir/src/createbook.cpp.o.d -o CMakeFiles/httpserver.dir/src/createbook.cpp.o -c /home/sang/桌面/http/src/createbook.cpp
 
 CMakeFiles/httpserver.dir/src/createbook.cpp.i: cmake_force
@@ -142,7 +170,7 @@ CMakeFiles/httpserver.dir/src/createbook.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/createchapter.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/createchapter.cpp.o: /home/sang/桌面/http/src/createchapter.cpp
 CMakeFiles/httpserver.dir/src/createchapter.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/httpserver.dir/src/createchapter.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/httpserver.dir/src/createchapter.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/createchapter.cpp.o -MF CMakeFiles/httpserver.dir/src/createchapter.cpp.o.d -o CMakeFiles/httpserver.dir/src/createchapter.cpp.o -c /home/sang/桌面/http/src/createchapter.cpp
 
 CMakeFiles/httpserver.dir/src/createchapter.cpp.i: cmake_force
@@ -156,7 +184,7 @@ CMakeFiles/httpserver.dir/src/createchapter.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/db.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/db.cpp.o: /home/sang/桌面/http/src/db.cpp
 CMakeFiles/httpserver.dir/src/db.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/httpserver.dir/src/db.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/httpserver.dir/src/db.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/db.cpp.o -MF CMakeFiles/httpserver.dir/src/db.cpp.o.d -o CMakeFiles/httpserver.dir/src/db.cpp.o -c /home/sang/桌面/http/src/db.cpp
 
 CMakeFiles/httpserver.dir/src/db.cpp.i: cmake_force
@@ -170,7 +198,7 @@ CMakeFiles/httpserver.dir/src/db.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/editchapter.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/editchapter.cpp.o: /home/sang/桌面/http/src/editchapter.cpp
 CMakeFiles/httpserver.dir/src/editchapter.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/httpserver.dir/src/editchapter.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/httpserver.dir/src/editchapter.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/editchapter.cpp.o -MF CMakeFiles/httpserver.dir/src/editchapter.cpp.o.d -o CMakeFiles/httpserver.dir/src/editchapter.cpp.o -c /home/sang/桌面/http/src/editchapter.cpp
 
 CMakeFiles/httpserver.dir/src/editchapter.cpp.i: cmake_force
@@ -184,7 +212,7 @@ CMakeFiles/httpserver.dir/src/editchapter.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/find.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/find.cpp.o: /home/sang/桌面/http/src/find.cpp
 CMakeFiles/httpserver.dir/src/find.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/httpserver.dir/src/find.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/httpserver.dir/src/find.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/find.cpp.o -MF CMakeFiles/httpserver.dir/src/find.cpp.o.d -o CMakeFiles/httpserver.dir/src/find.cpp.o -c /home/sang/桌面/http/src/find.cpp
 
 CMakeFiles/httpserver.dir/src/find.cpp.i: cmake_force
@@ -195,10 +223,24 @@ CMakeFiles/httpserver.dir/src/find.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/find.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/find.cpp -o CMakeFiles/httpserver.dir/src/find.cpp.s
 
+CMakeFiles/httpserver.dir/src/findbooks.cpp.o: CMakeFiles/httpserver.dir/flags.make
+CMakeFiles/httpserver.dir/src/findbooks.cpp.o: /home/sang/桌面/http/src/findbooks.cpp
+CMakeFiles/httpserver.dir/src/findbooks.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/httpserver.dir/src/findbooks.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/findbooks.cpp.o -MF CMakeFiles/httpserver.dir/src/findbooks.cpp.o.d -o CMakeFiles/httpserver.dir/src/findbooks.cpp.o -c /home/sang/桌面/http/src/findbooks.cpp
+
+CMakeFiles/httpserver.dir/src/findbooks.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/httpserver.dir/src/findbooks.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sang/桌面/http/src/findbooks.cpp > CMakeFiles/httpserver.dir/src/findbooks.cpp.i
+
+CMakeFiles/httpserver.dir/src/findbooks.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/findbooks.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/findbooks.cpp -o CMakeFiles/httpserver.dir/src/findbooks.cpp.s
+
 CMakeFiles/httpserver.dir/src/login.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/login.cpp.o: /home/sang/桌面/http/src/login.cpp
 CMakeFiles/httpserver.dir/src/login.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/httpserver.dir/src/login.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/httpserver.dir/src/login.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/login.cpp.o -MF CMakeFiles/httpserver.dir/src/login.cpp.o.d -o CMakeFiles/httpserver.dir/src/login.cpp.o -c /home/sang/桌面/http/src/login.cpp
 
 CMakeFiles/httpserver.dir/src/login.cpp.i: cmake_force
@@ -212,7 +254,7 @@ CMakeFiles/httpserver.dir/src/login.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/main.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/main.cpp.o: /home/sang/桌面/http/src/main.cpp
 CMakeFiles/httpserver.dir/src/main.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/httpserver.dir/src/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/httpserver.dir/src/main.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/main.cpp.o -MF CMakeFiles/httpserver.dir/src/main.cpp.o.d -o CMakeFiles/httpserver.dir/src/main.cpp.o -c /home/sang/桌面/http/src/main.cpp
 
 CMakeFiles/httpserver.dir/src/main.cpp.i: cmake_force
@@ -223,10 +265,24 @@ CMakeFiles/httpserver.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/main.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/main.cpp -o CMakeFiles/httpserver.dir/src/main.cpp.s
 
+CMakeFiles/httpserver.dir/src/mybook.cpp.o: CMakeFiles/httpserver.dir/flags.make
+CMakeFiles/httpserver.dir/src/mybook.cpp.o: /home/sang/桌面/http/src/mybook.cpp
+CMakeFiles/httpserver.dir/src/mybook.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/httpserver.dir/src/mybook.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/mybook.cpp.o -MF CMakeFiles/httpserver.dir/src/mybook.cpp.o.d -o CMakeFiles/httpserver.dir/src/mybook.cpp.o -c /home/sang/桌面/http/src/mybook.cpp
+
+CMakeFiles/httpserver.dir/src/mybook.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/httpserver.dir/src/mybook.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sang/桌面/http/src/mybook.cpp > CMakeFiles/httpserver.dir/src/mybook.cpp.i
+
+CMakeFiles/httpserver.dir/src/mybook.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/httpserver.dir/src/mybook.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sang/桌面/http/src/mybook.cpp -o CMakeFiles/httpserver.dir/src/mybook.cpp.s
+
 CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o: /home/sang/桌面/http/src/mysqlpool.cpp
 CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o -MF CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o.d -o CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o -c /home/sang/桌面/http/src/mysqlpool.cpp
 
 CMakeFiles/httpserver.dir/src/mysqlpool.cpp.i: cmake_force
@@ -240,7 +296,7 @@ CMakeFiles/httpserver.dir/src/mysqlpool.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/readchapter.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/readchapter.cpp.o: /home/sang/桌面/http/src/readchapter.cpp
 CMakeFiles/httpserver.dir/src/readchapter.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/httpserver.dir/src/readchapter.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/httpserver.dir/src/readchapter.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/readchapter.cpp.o -MF CMakeFiles/httpserver.dir/src/readchapter.cpp.o.d -o CMakeFiles/httpserver.dir/src/readchapter.cpp.o -c /home/sang/桌面/http/src/readchapter.cpp
 
 CMakeFiles/httpserver.dir/src/readchapter.cpp.i: cmake_force
@@ -254,7 +310,7 @@ CMakeFiles/httpserver.dir/src/readchapter.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/review.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/review.cpp.o: /home/sang/桌面/http/src/review.cpp
 CMakeFiles/httpserver.dir/src/review.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/httpserver.dir/src/review.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/httpserver.dir/src/review.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/review.cpp.o -MF CMakeFiles/httpserver.dir/src/review.cpp.o.d -o CMakeFiles/httpserver.dir/src/review.cpp.o -c /home/sang/桌面/http/src/review.cpp
 
 CMakeFiles/httpserver.dir/src/review.cpp.i: cmake_force
@@ -268,7 +324,7 @@ CMakeFiles/httpserver.dir/src/review.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/reviewlist.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/reviewlist.cpp.o: /home/sang/桌面/http/src/reviewlist.cpp
 CMakeFiles/httpserver.dir/src/reviewlist.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/httpserver.dir/src/reviewlist.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/httpserver.dir/src/reviewlist.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/reviewlist.cpp.o -MF CMakeFiles/httpserver.dir/src/reviewlist.cpp.o.d -o CMakeFiles/httpserver.dir/src/reviewlist.cpp.o -c /home/sang/桌面/http/src/reviewlist.cpp
 
 CMakeFiles/httpserver.dir/src/reviewlist.cpp.i: cmake_force
@@ -282,7 +338,7 @@ CMakeFiles/httpserver.dir/src/reviewlist.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/rname.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/rname.cpp.o: /home/sang/桌面/http/src/rname.cpp
 CMakeFiles/httpserver.dir/src/rname.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/httpserver.dir/src/rname.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/httpserver.dir/src/rname.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/rname.cpp.o -MF CMakeFiles/httpserver.dir/src/rname.cpp.o.d -o CMakeFiles/httpserver.dir/src/rname.cpp.o -c /home/sang/桌面/http/src/rname.cpp
 
 CMakeFiles/httpserver.dir/src/rname.cpp.i: cmake_force
@@ -296,7 +352,7 @@ CMakeFiles/httpserver.dir/src/rname.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/rpassword.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/rpassword.cpp.o: /home/sang/桌面/http/src/rpassword.cpp
 CMakeFiles/httpserver.dir/src/rpassword.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/httpserver.dir/src/rpassword.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/httpserver.dir/src/rpassword.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/rpassword.cpp.o -MF CMakeFiles/httpserver.dir/src/rpassword.cpp.o.d -o CMakeFiles/httpserver.dir/src/rpassword.cpp.o -c /home/sang/桌面/http/src/rpassword.cpp
 
 CMakeFiles/httpserver.dir/src/rpassword.cpp.i: cmake_force
@@ -310,7 +366,7 @@ CMakeFiles/httpserver.dir/src/rpassword.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/updateEdit.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/updateEdit.cpp.o: /home/sang/桌面/http/src/updateEdit.cpp
 CMakeFiles/httpserver.dir/src/updateEdit.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/httpserver.dir/src/updateEdit.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/httpserver.dir/src/updateEdit.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/updateEdit.cpp.o -MF CMakeFiles/httpserver.dir/src/updateEdit.cpp.o.d -o CMakeFiles/httpserver.dir/src/updateEdit.cpp.o -c /home/sang/桌面/http/src/updateEdit.cpp
 
 CMakeFiles/httpserver.dir/src/updateEdit.cpp.i: cmake_force
@@ -324,7 +380,7 @@ CMakeFiles/httpserver.dir/src/updateEdit.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/web.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/web.cpp.o: /home/sang/桌面/http/src/web.cpp
 CMakeFiles/httpserver.dir/src/web.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/httpserver.dir/src/web.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/httpserver.dir/src/web.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/web.cpp.o -MF CMakeFiles/httpserver.dir/src/web.cpp.o.d -o CMakeFiles/httpserver.dir/src/web.cpp.o -c /home/sang/桌面/http/src/web.cpp
 
 CMakeFiles/httpserver.dir/src/web.cpp.i: cmake_force
@@ -338,7 +394,7 @@ CMakeFiles/httpserver.dir/src/web.cpp.s: cmake_force
 CMakeFiles/httpserver.dir/src/zhuche.cpp.o: CMakeFiles/httpserver.dir/flags.make
 CMakeFiles/httpserver.dir/src/zhuche.cpp.o: /home/sang/桌面/http/src/zhuche.cpp
 CMakeFiles/httpserver.dir/src/zhuche.cpp.o: CMakeFiles/httpserver.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/httpserver.dir/src/zhuche.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/httpserver.dir/src/zhuche.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/httpserver.dir/src/zhuche.cpp.o -MF CMakeFiles/httpserver.dir/src/zhuche.cpp.o.d -o CMakeFiles/httpserver.dir/src/zhuche.cpp.o -c /home/sang/桌面/http/src/zhuche.cpp
 
 CMakeFiles/httpserver.dir/src/zhuche.cpp.i: cmake_force
@@ -354,14 +410,18 @@ httpserver_OBJECTS = \
 "CMakeFiles/httpserver.dir/src/HttpServer.cpp.o" \
 "CMakeFiles/httpserver.dir/src/bookinfo.cpp.o" \
 "CMakeFiles/httpserver.dir/src/booklist.cpp.o" \
+"CMakeFiles/httpserver.dir/src/bookreview.cpp.o" \
+"CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o" \
 "CMakeFiles/httpserver.dir/src/chapterlist.cpp.o" \
 "CMakeFiles/httpserver.dir/src/createbook.cpp.o" \
 "CMakeFiles/httpserver.dir/src/createchapter.cpp.o" \
 "CMakeFiles/httpserver.dir/src/db.cpp.o" \
 "CMakeFiles/httpserver.dir/src/editchapter.cpp.o" \
 "CMakeFiles/httpserver.dir/src/find.cpp.o" \
+"CMakeFiles/httpserver.dir/src/findbooks.cpp.o" \
 "CMakeFiles/httpserver.dir/src/login.cpp.o" \
 "CMakeFiles/httpserver.dir/src/main.cpp.o" \
+"CMakeFiles/httpserver.dir/src/mybook.cpp.o" \
 "CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o" \
 "CMakeFiles/httpserver.dir/src/readchapter.cpp.o" \
 "CMakeFiles/httpserver.dir/src/review.cpp.o" \
@@ -378,14 +438,18 @@ httpserver_EXTERNAL_OBJECTS =
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/HttpServer.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/bookinfo.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/booklist.cpp.o
+/home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/bookreview.cpp.o
+/home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/bookreviewlist.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/chapterlist.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/createbook.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/createchapter.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/db.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/editchapter.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/find.cpp.o
+/home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/findbooks.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/login.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/main.cpp.o
+/home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/mybook.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/mysqlpool.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/readchapter.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/review.cpp.o
@@ -397,7 +461,7 @@ httpserver_EXTERNAL_OBJECTS =
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/src/zhuche.cpp.o
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/build.make
 /home/sang/桌面/http/bin/httpserver: CMakeFiles/httpserver.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Linking CXX executable /home/sang/桌面/http/bin/httpserver"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sang/桌面/http/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Linking CXX executable /home/sang/桌面/http/bin/httpserver"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/httpserver.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

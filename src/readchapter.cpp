@@ -2,7 +2,7 @@
 readchapter::readchapter(){
     setmethodname("readchapter");
 }
-std::string readchapter::send(){
+std::string readchapter::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);

@@ -3,7 +3,7 @@ rname::rname(){
     setmethodname("rname");
 }
 
-std::string rname::send(){
+std::string rname::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);

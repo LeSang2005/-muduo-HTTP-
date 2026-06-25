@@ -2,7 +2,7 @@
 booklist::booklist(){
     setmethodname("booklist");
 }
-std::string booklist::send(){
+std::string booklist::send(std::string message_){
     json js_r;
     std::string response;
     json js=json::parse(message_);
@@ -10,12 +10,12 @@ std::string booklist::send(){
     int size=js["size"];
     page=(page-1)*10;
     auto mysql=mysqlPool::instance().pop();
-    std::string word="select count(*) from book";
+    std::string word="select count(*) from book where status=1";
     auto res=mysql->find(word);
     MYSQL_ROW row=mysql_fetch_row(res.get());
     int total=atoi(std::string(row[0]).c_str());
     js_r["totalPages"]=total;
-    word="select * from book limit ";
+    word="select * from book where status=1 limit ";
     word=word+mysql->escape(std::to_string(page))+","+mysql->escape(std::to_string(size))+";";
     res=mysql->find(word);
     js_r["books"]=json::array();
